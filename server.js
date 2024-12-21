@@ -12,6 +12,8 @@ const io = socketio(server);
 
 // Makes public folder the static folder
 app.use(express.static(path.join(__dirname, 'public')));
+// Serves live server with CSS files
+// app.use('/css', express.static(path.join(__dirname, 'css')));
 
 // Server side connection sending html files
 app.get('/', function(req, res, next) {
@@ -30,7 +32,6 @@ app.get('/test2.html', function(req, res, next) {
 
 // Response to connection
 io.on('connection', socket => {
-    console.log('New person connected');
     socket.emit('New person connected');
 });
 
