@@ -8,12 +8,8 @@
 
 </head>
 <body>
-    <!-- Webscript initialization for main.js -->
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="../js/main.js"></script>
-
     <img id= "catImage" src= "../cat.gif" > </img>
-    <p> This is the first page </p>
+    <p id="clientCount">Current online users: 0</p>
     
     <nav class="navbar">
         <ul>
@@ -25,5 +21,9 @@
     <!-- Button -->
     <button id="changeCatButton" type="button">Change Cat</button>
     <script src="../js/changeCat.js"></script>
+
+    <!-- Webscript initialization for main.js -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="../js/main.js"></script>
 </body>
 </html>

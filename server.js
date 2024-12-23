@@ -12,8 +12,11 @@ const io = socketio(server);
 
 // Makes public folder the static folder
 app.use(express.static(path.join(__dirname, 'public')));
-// Serves live server with CSS files
-// app.use('/css', express.static(path.join(__dirname, 'css')));
+app.use('/css', express.static(path.join(__dirname, 'css')));
+
+// Website variables
+let clientCount = 0;
+
 
 // Server side connection sending html files
 app.get('/', function(req, res, next) {
@@ -29,13 +32,23 @@ app.get('/test2.html', function(req, res, next) {
     res.sendFile(path.join(__dirname, 'public', 'html/test2.html'));
 });
 
-
-// Response to connection
-io.on('connection', socket => {
-    socket.emit('New person connected');
-});
-
 // Server's connection to port
 server.listen(port, () => {
     console.log(`Connection for port ${port} successful`);
 }); 
+
+// Client side events
+io.on('connection', socket => {
+    console.log("New person connected");
+    clientCount++;
+    socket.emit('message', 'New person connected');
+    io.emit('updateClientCount', clientCount);
+
+    // Response for client disconnect
+    socket.on('disconnect', () => {
+        socket.emit('message', 'A person disconnected');
+        clientCount--;
+        io.emit('updateClientCount', clientCount);
+    });
+});
+
