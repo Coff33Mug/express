@@ -8,7 +8,17 @@
 
 </head>
 <body>
-    <img id= "catImage" src= "../cat.gif" > </img>
+    <!-- To place dice next to cat image -->
+    <div id="contentWrapper">
+        <img id= "catImage" src= "../cat.gif" > </img>
+        <div id='diceContainer'>
+            <p class= "dice"id="dice1">Dice 1</p>
+        </div>
+        <div id='diceContainer'>
+            <p class= "dice" id="dice2">Dice 2</p>
+        </div>
+    </div>
+
     <p id="clientCount">Current online users: 0</p>
     
     <nav class="navbar">
@@ -17,10 +27,11 @@
             <li><a href="test2.html">test2</a></li>
         </ul>
     </nav>
-
+   
+    <button id="rollDice" type="button">Roll Dice</button>
     <!-- Button -->
     <button id="changeCatButton" type="button">Change Cat</button>
-    <script src="../js/changeCat.js"></script>
+    <script src="../js/buttonEvents.js"></script>
 
     <!-- Webscript initialization for main.js -->
     <script src="/socket.io/socket.io.js"></script>

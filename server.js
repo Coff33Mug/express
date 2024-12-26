@@ -50,5 +50,11 @@ io.on('connection', socket => {
         clientCount--;
         io.emit('updateClientCount', clientCount);
     });
+
+    // Emits results to all online clients
+    socket.on('rollDice', results => {
+        console.log(results);
+        io.sockets.emit('diceResult', results);
+    });
 });
 

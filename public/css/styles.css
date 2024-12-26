@@ -1,7 +1,27 @@
 p {
-    color: red
+    color: red;
+}
+
+img {
+    padding: 5px;
 }
 
 body {
     background-color: gray;
 }
+
+#contentWrapper {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.dice {
+    color:black;
+    border: 2px solid black;
+    display: inline;
+    padding:10px;
+    margin: 5px;
+    top:10px;
+}
+

@@ -3,8 +3,10 @@ const images = [
     "../cat.gif", 
 ];
 
+// Value that iterates through images
 let index = 0;
 
+// Change Cat Button
 document.getElementById('changeCatButton').addEventListener('click', function() {
     //document.getElementById('catImage').src = "./cat-kaboom.gif";
     console.log("button pressed");
@@ -16,3 +18,4 @@ document.getElementById('changeCatButton').addEventListener('click', function() 
         index = 0;
     }
 });
+
