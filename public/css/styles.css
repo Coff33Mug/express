@@ -10,10 +10,21 @@ body {
     background-color: gray;
 }
 
-#contentWrapper {
+button {
+    display: block;
+    margin-top: 5px;
+}
+
+/* Flex Box for dice,  */
+.contentWrapper {
     display: flex;
     align-items: center;
     justify-content: flex-start;
+}
+
+/* Gives margin to dice */
+.diceContainer {
+    margin-bottom: 30px;
 }
 
 .dice {
@@ -22,6 +33,6 @@ body {
     display: inline;
     padding:10px;
     margin: 5px;
-    top:10px;
 }
+
 

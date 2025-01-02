@@ -16,11 +16,12 @@ app.use('/css', express.static(path.join(__dirname, 'css')));
 
 // Website variables
 let clientCount = 0;
-
+// Consider making this an object
+let rooms = [];
 
 // Server side connection sending html files
 app.get('/', function(req, res, next) {
-    res.redirect('/test.html');
+    res.redirect('/test2.html');
 });
 
 // Responses to links for HTML files
@@ -42,6 +43,7 @@ io.on('connection', socket => {
     console.log("New person connected");
     clientCount++;
     socket.emit('message', 'New person connected');
+    
     io.emit('updateClientCount', clientCount);
 
     // Response for client disconnect
@@ -54,7 +56,39 @@ io.on('connection', socket => {
     // Emits results to all online clients
     socket.on('rollDice', results => {
         console.log(results);
-        io.sockets.emit('diceResult', results);
+        console.log(rooms);
+        io.emit('diceResult', results);
+    });
+
+    // Puts client connection into a room
+    socket.on('joinRoom', ({username, roomName}) => {
+        // Checks for the existence of the room, the if statement
+        // checks to see if there was a found room
+        // I believe itll act as an object
+        let room = rooms.find(r => r.name === roomName);
+        if (room) {
+            console.log("attempting to join room");
+            room.clients.push(username);
+            socket.join(roomName);
+            socket.emit('redirectToPage', '/test.html');
+            socket.emit('updateClientUsernameAndRoom', {username: username, roomName: roomName});
+        }
+    });
+
+    // Sends room list to client
+    socket.on('getRoomList', () => {
+        socket.emit('currentRoomList', rooms);
+        console.log("Sent rooms to client side");
+    });
+    
+    // Adds a room to the array of rooms
+    socket.on('addRoom', roomName => {
+        const room = {
+            name: roomName,
+            clients: []
+        }
+        rooms.push(room);
+        console.log("Room Added");
     });
 });
 
