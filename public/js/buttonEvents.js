@@ -18,6 +18,10 @@ socket.on('redirectToPage', url => {
     window.location.href = url;
 });
 
+socket.on('message', message => {
+    console.log(message);
+});
+
 // Change Cat Button 
 document.getElementById('changeCatButton').addEventListener('click', function() {
     console.log("button pressed");
@@ -39,15 +43,11 @@ document.getElementById('confirmButton').addEventListener('click', function() {
     socket.emit('getRoomList');
     socket.on('currentRoomList', newRoomList => {
         // Checks if room exist
-        // Look at conditional statements to see if it's getting from array properly
         if (roomName != "" && newRoomList.find(room => room.name === roomName)) {
             currentRoom.updateName(roomName);
             currentRoom.addClient(username);
 
-            // Changed parameter to send an object
-            // Emit below is not working.
             socket.emit('joinRoom', {username: username, roomName: roomName});
-            console.log("Room Created");
         } else {
             console.log("Room does not exist");
         }
@@ -61,10 +61,10 @@ document.getElementById('createRoom').addEventListener('click', function() {
     // Request to update room list on client side
     socket.emit('getRoomList');
     socket.on('currentRoomList', newRoomList => {
-        // Adds the room
+        // Adds the room given that it doesn't exist
         if (roomName != "" && !(newRoomList.find(room => room.name.includes(roomName)))) {
-            // let room = new Room(roomName);
             socket.emit('addRoom', roomName);
+            console.log("Room Created");
         }
     });
 });

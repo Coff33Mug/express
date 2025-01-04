@@ -5,16 +5,42 @@ const socket = instance;
 // const socket = io("http://localhost:3000/");
 const catImage = document.getElementById('catImage');
 const clientCountParagraph = document.getElementById('clientCount');
-let currentRoom = new Room();
-
+let currentRoomName;
+let currentUsername;
 
 // Events that respond to server emits
-socket.on('message', message => {
-    console.log(message);
+
+/* 
+    The two events below fire off upon connection and disconnection via browser closing
+    On connection, request room information from the server. On disconnect, request to remove
+    the user and update the amount of clients online.
+*/
+socket.on('connect', () => {
+    socket.emit('requestAllInformation');
 });
 
-socket.on('updateClientCount', clientCount => {
-    clientCountParagraph.innerText = "Current online users: " + clientCount;
+window.addEventListener('unload',() => {
+    console.log(`${currentUsername} is disconnecting`);
+    socket.emit('removeUser', ({username: currentUsername, roomName: currentRoom.name}));
+    socket.emit('updateRoomClientCount', ({roomName: currentRoomName}));
+});
+
+socket.on('updatedInformation', ({username, roomName, onlineUsers}) => {
+    currentUsername = username;
+    currentRoomName = roomName;
+    clientCountParagraph.innerText = "Current online users: " + onlineUsers;
+    socket.emit('updateRoomClientCount', ({roomName: currentRoomName}));
+});
+
+
+socket.on('updateClientCount', ({roomName, onlineUsers}) => {
+    if (roomName === currentRoomName) {
+        clientCountParagraph.innerText = "Current online users: " + onlineUsers;
+    }
+});
+
+socket.on('message', message => {
+    console.log(message);
 });
 
 socket.on('diceResult', resultsObject => {
@@ -22,12 +48,6 @@ socket.on('diceResult', resultsObject => {
         document.getElementById(`dice${i}`).innerText = resultsObject.result[i-1];
     }
     console.log("Got dice results");
-});
-
-socket.on('updateClientUsernameAndRoom', information => {
-    currentRoom.addClient(information.username);
-    currentRoom.updateName(information.roomName);
-    console.log("Client Side information updated");
 });
 
 socket.on('joinedRoom', username => {
