@@ -50,7 +50,7 @@ io.on('connection', socket => {
         io.emit('message', 'A person disconnected');
     });
 
-    /*
+    /* // Game events
         This request comes from main.js after a person joins a room through the 
         confirm button. This sends information that is given through button events
         to main.js to manage the room.
@@ -97,9 +97,11 @@ io.on('connection', socket => {
     // Emits results to all online clients
     socket.on('rollDice', results => {
         console.log(results);
+        console.log(rooms);
         io.emit('diceResult', results); // Sent to main.js
     });
 
+    // Room Events
     /*
         This request comes from buttonEvents.js
         Puts client connection into a room, for some reason, emits to anything in
@@ -123,7 +125,6 @@ io.on('connection', socket => {
     // Sends room list to client
     socket.on('getRoomList', () => {
         socket.emit('currentRoomList', rooms); // Sent to buttonEvents.js
-        console.log("Sent rooms to client side");
     });
     
     // Adds a room to the array of rooms
@@ -133,7 +134,21 @@ io.on('connection', socket => {
             clients: []
         }
         rooms.push(room);
-        console.log("Room Added");
+        console.log(`The room ${roomName} was added`);
     });
+
+    // socket.on('removeUser', ({username, roomName}) => {
+    //     console.log("Attempting to remove user");
+    //     const room = rooms.find(r => r.name === roomName);
+        
+    //     // if room doesn't exist, throw an error
+    //     if(room) {
+    //         room.clients = room.clients.filter(client => client !== username);
+    //         io.emit('updateClientCount', room.clients.length);
+    //         console.log(`${username} was removed from ${roomName}`);
+    //     } else {
+    //         console.log("Can't find room to remove client");
+    //     }
+    // });
 });
 
