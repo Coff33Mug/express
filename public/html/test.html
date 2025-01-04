@@ -1,29 +1,46 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>your mother</title>
-    <link rel = "stylesheet" href = "../css/styles.css" type="text/css">
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>your mother</title>
+        <link rel = "stylesheet" href = "../css/styles.css" type="text/css">
 
-</head>
-<body>
-    <!-- Webscript initialization for main.js -->
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="../js/main.js"></script>
+    </head>
+    <body>
+        <!-- To place dice next to cat image -->
+        <img id= "catImage" src= "../cat.gif" style="padding: 10px;"> </img>
+        <div class="contentWrapper">
+            <div class='diceContainer'>
+                <p class= "dice" id="dice1">Dice 1</p>
+                <p class= "dice" id="dice2">Dice 2</p>
+                <p class= "dice" id="dice3">Dice 3</p>
+            </div>
+        </div>
 
-    <img id= "catImage" src= "../cat.gif" > </img>
-    <p> This is the first page </p>
+        <div class="contentWrapper">
+                <div class='diceContainer'>
+                    <p class= "dice" id="dice4">Dice 4</p>
+                    <p class= "dice" id="dice5">Dice 5</p>
+                    <p class= "dice" id="dice6">Dice 6</p>
+                </div>
+        </div>
+
+        <p id="clientCount">Current online users: </p>
+        
+        <nav class="navbar">
+            <ul>
+                <li><a href="test2.html">test2</a></li>
+            </ul>
+        </nav>
     
-    <nav class="navbar">
-        <ul>
-            <li><a href="test.html">test</a></li>
-            <li><a href="test2.html">test2</a></li>
-        </ul>
-    </nav>
+        <button id="rollDice" type="button">Roll Dice</button>
+        <!-- Button -->
+        <button id="changeCatButton" type="button">Change Cat</button>
 
-    <!-- Button -->
-    <button id="changeCatButton" type="button">Change Cat</button>
-    <script src="../js/changeCat.js"></script>
-</body>
-</html>
+        <!-- Webscript initialization for main.js -->
+        <script src="/socket.io/socket.io.js"></script>
+        <script type="module"src="../js/socketManager.js"></script>
+        <script type="module" src="../js/main.js"></script>
+    </body>
+    </html>
