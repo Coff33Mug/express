@@ -1,5 +1,4 @@
 import instance from "./socketManager.js";
-import Room from "./room.js";
 
 const socket = instance;
 // const socket = io("http://localhost:3000/");
@@ -19,9 +18,9 @@ socket.on('connect', () => {
     socket.emit('requestAllInformation');
 });
 
-window.addEventListener('unload',() => {
+window.addEventListener('unload', () => {
     console.log(`${currentUsername} is disconnecting`);
-    socket.emit('removeUser', ({username: currentUsername, roomName: currentRoom.name}));
+    socket.emit('removeUser', ({username: currentUsername, roomName: currentRoomName}));
     socket.emit('updateRoomClientCount', ({roomName: currentRoomName}));
 });
 
