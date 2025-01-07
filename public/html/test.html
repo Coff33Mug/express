@@ -10,6 +10,11 @@
     <body>
         <!-- To place dice next to cat image -->
         <img id= "catImage" src= "../cat.gif" style="padding: 10px;"> </img>
+        <p id="clientCount">Current online users: </p>
+        <div class="gameInformationVBox">
+
+            <p id="gameInformation"></p>
+        </div>
         <div class="contentWrapper">
             <div class='diceContainer'>
                 <p class= "dice" id="dice1">Dice 1</p>
@@ -25,15 +30,14 @@
                     <p class= "dice" id="dice6">Dice 6</p>
                 </div>
         </div>
-
-        <p id="clientCount">Current online users: </p>
         
         <nav class="navbar">
             <ul>
                 <li><a href="test2.html">test2</a></li>
             </ul>
         </nav>
-    
+        
+        <button id="leaveRoomButton">Leave Room</button>
         <button id="rollDiceButton" type="button">Roll Dice</button>
         <!-- Button -->
         <button id="changeCatButton" type="button">Change Cat</button>

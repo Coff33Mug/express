@@ -21,6 +21,7 @@ socket.on('connect', () => {
 });
 
 window.addEventListener('load', () => {
+    // Checks for if the user reloaded webpage
     const navigationType = performance.getEntriesByType("navigation")[0].type;
     if (navigationType === 'reload') {
         window.location.href = '/test2.html';
@@ -36,7 +37,7 @@ window.addEventListener('unload', () => {
 socket.on('updatedInformation', ({username, roomName, onlineUsers, player}) => {
     currentUsername = username;
     currentRoomName = roomName;
-    this.player = player;
+    currentPlayer = player;
     clientCountParagraph.innerText = "Current online users: " + onlineUsers;
     socket.emit('updateRoomClientCount', ({roomName: currentRoomName}));
 });
@@ -66,10 +67,6 @@ socket.on('updatedPlayer', ({player}) => {
     }
 });
 
-socket.on('message', message => {
-    console.log(message);
-});
-
 socket.on('diceResult', ({roomName, result}) => {
     if (currentRoomName === roomName) {
         for (let i = 1; i <= 6; i++) {
@@ -77,6 +74,10 @@ socket.on('diceResult', ({roomName, result}) => {
         }
         console.log("Got dice results");
     }
+});
+
+socket.on('message', message => {
+    console.log(message);
 });
 
 socket.on('joinedRoom', username => {
@@ -101,6 +102,14 @@ document.getElementById('changeCatButton').addEventListener('click', function() 
         document.getElementById('catImage').src = images[index];
         index = 0;
     }
+});
+
+// Leave room button
+document.getElementById('leaveRoomButton').addEventListener('click', function () {
+    console.log(`${currentUsername} is disconnecting`);
+    socket.emit('removeUser', ({username: currentUsername, roomName: currentRoomName}));
+    socket.emit('updateRoomClientCount', ({roomName: currentRoomName}));
+    window.location.href = '/test2.html';
 });
 
 // Dice rolling element

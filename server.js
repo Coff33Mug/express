@@ -47,6 +47,11 @@ io.on('connection', socket => {
         io.emit('message', 'A person disconnected');
     });
 
+    socket.on('forceDisconnect', () => {
+        socket.disconnect();
+        console.log("force disconnect done");
+    });
+
     /* // Game events
         This request comes from main.js after a person joins a room through the 
         confirm button. This sends information that is given through button events
@@ -132,6 +137,7 @@ io.on('connection', socket => {
         const room = {
             name: roomName,
             clients: [],
+            points: [],
             turnNumber: 0
         }
         rooms.push(room);
@@ -147,9 +153,25 @@ io.on('connection', socket => {
             return;
         }
         
+        const userIndex = room.clients.indexOf(username);
         // Removes user from room
         room.clients = room.clients.filter(client => client !== username);
-        io.emit('updateClientCount', room.clients.length);
+        /* Updates turn number to prevent turn softlock
+           Ex. It is p2's turn and they leave, nobody can roll now.
+           
+        Did they have turn? 
+            Yes -> 
+                turn # = 0 
+            No -> Were they behind the player who had the turn? 
+                Yes -> turn # - 1 
+                No -> do nothing 
+        */
+        if (userIndex === room.turnNumber) {
+            // Basically sets turnNumber to 0
+            room.turnNumber = room.turnNumber % room.clients.length;
+        } else if (userIndex < room.turnNumber) {
+            room.turnNumber--;
+        }
         console.log(`${username} was removed from ${roomName}`);
         
         // If the room has nobody in it, delete the room.
