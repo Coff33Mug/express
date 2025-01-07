@@ -42,9 +42,6 @@ server.listen(port, () => {
 
 // Client side events
 io.on('connection', socket => {
-    // console.log("New person connected");
-    // io.emit('message', 'New person connected'); // Sent to main.js
-
     // Response for client disconnect
     socket.on('disconnect', () => {
         io.emit('message', 'A person disconnected');
@@ -59,10 +56,20 @@ io.on('connection', socket => {
         const room = rooms.find(r => r.name === tempRoomName);
         if (room) {
             const onlineUsers = room.clients.length;
-            socket.emit('updatedInformation', ({username: tempUsername, roomName: tempRoomName, onlineUsers: onlineUsers}));
+            let player = room.clients[room.turnNumber];
+            socket.emit('updatedInformation', ({username: tempUsername, roomName: tempRoomName, onlineUsers: onlineUsers, player}));
             io.emit('updateClientCount', ({roomName: tempRoomName, onlineUsers})); // Sent to main.js
         } else {
-            console.log("Room not found");
+            // Still runs when the last person in the room leaves
+            console.log("Room not found in requestAllInformation");
+        }
+    });
+
+    socket.on('getPlayer', ({roomName}) => {
+        let room = rooms.find(r => r.name === roomName);
+        if (room) {
+            let player = room.clients[room.turnNumber];
+            socket.emit('updatedPlayer', ({player}));
         }
     });
 
@@ -76,29 +83,22 @@ io.on('connection', socket => {
             const onlineUsers = room.clients.length;
             io.emit('updateClientCount', ({roomName, onlineUsers})); // Sent to main.js
         } else {
-            console.log("Room not found");
-        }
-    });
-
-    socket.on('removeUser', ({username, roomName}) => {
-        console.log("Attempting to remove user");
-        const room = rooms.find(r => r.name === roomName);
-        
-        // if room doesn't exist, throw an error
-        if(room) {
-            room.clients = room.clients.filter(client => client !== username);
-            io.emit('updateClientCount', room.clients.length);
-            console.log(`${username} was removed from ${roomName}`);
-        } else {
-            console.log("Can't find room to remove client");
+            console.log("Room not found in updateRoomClientCount");
         }
     });
 
     // Emits results to all online clients
-    socket.on('rollDice', results => {
-        console.log(results);
+    socket.on('rollDice', ({roomName, result}) => {
+        console.log(result);
         console.log(rooms);
-        io.emit('diceResult', results); // Sent to main.js
+        let room = rooms.find(r => r.name === roomName);
+        if (room) {
+            room.turnNumber++;
+            room.turnNumber = room.turnNumber % room.clients.length;
+            io.emit('diceResult', ({roomName, result})); // Sent to main.js
+        } else {
+            console.log("Room not found in rollDice");
+        }
     });
 
     // Room Events
@@ -114,7 +114,7 @@ io.on('connection', socket => {
         if (room) {
             console.log("attempting to join room");
             room.clients.push(username);
-            socket.join(roomName);
+            socket.join(roomName)
             tempRoomName = roomName;
             tempUsername = username;
             // console.log(tempRoomName + " " + tempUsername);  // working properly
@@ -131,24 +131,35 @@ io.on('connection', socket => {
     socket.on('addRoom', roomName => {
         const room = {
             name: roomName,
-            clients: []
+            clients: [],
+            turnNumber: 0
         }
         rooms.push(room);
         console.log(`The room ${roomName} was added`);
     });
 
-    // socket.on('removeUser', ({username, roomName}) => {
-    //     console.log("Attempting to remove user");
-    //     const room = rooms.find(r => r.name === roomName);
+    socket.on('removeUser', ({username, roomName}) => {
+        const room = rooms.find(r => r.name === roomName);
         
-    //     // if room doesn't exist, throw an error
-    //     if(room) {
-    //         room.clients = room.clients.filter(client => client !== username);
-    //         io.emit('updateClientCount', room.clients.length);
-    //         console.log(`${username} was removed from ${roomName}`);
-    //     } else {
-    //         console.log("Can't find room to remove client");
-    //     }
-    // });
+        // if room doesn't exist, throw an error
+        if (!room) {
+            console.log("Can't find room to remove client");
+            return;
+        }
+        
+        // Removes user from room
+        room.clients = room.clients.filter(client => client !== username);
+        io.emit('updateClientCount', room.clients.length);
+        console.log(`${username} was removed from ${roomName}`);
+        
+        // If the room has nobody in it, delete the room.
+        if (room.clients.length === 0) {
+            const index = rooms.findIndex(room => room.name === roomName);
+            if (index !== -1) {
+                rooms.splice(index, 1);
+            }
+        }
+    });
+
 });
 
