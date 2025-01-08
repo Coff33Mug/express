@@ -5,9 +5,10 @@ const socket = instance;
 // const socket = io("http://localhost:3000/");
 const catImage = document.getElementById('catImage');
 const clientCountParagraph = document.getElementById('clientCount');
+const gameInformationVBox = document.getElementById('gameInformationVBox');
+let currentRoom;
 let currentRoomName;
 let currentUsername;
-let updatedPlayer = false;
 let currentPlayer;
 
 // Events that respond to server emits
@@ -32,14 +33,23 @@ window.addEventListener('unload', () => {
     console.log(`${currentUsername} is disconnecting`);
     socket.emit('removeUser', ({username: currentUsername, roomName: currentRoomName}));
     socket.emit('updateRoomClientCount', ({roomName: currentRoomName}));
+    socket.emit('updateGameInfomation', ({roomName: currentRoomName}));
 });
 
-socket.on('updatedInformation', ({username, roomName, onlineUsers, player}) => {
+socket.on('updatedInformation', ({room, username}) => {
     currentUsername = username;
-    currentRoomName = roomName;
-    currentPlayer = player;
-    clientCountParagraph.innerText = "Current online users: " + onlineUsers;
-    socket.emit('updateRoomClientCount', ({roomName: currentRoomName}));
+    currentRoomName = room.name;
+    currentPlayer = room.turnNumber;
+    currentRoom = room;
+    clientCountParagraph.innerText = "Current online users: " + room.clients.length;
+    socket.emit('updateGameInfomation', ({roomName: currentRoomName}));
+});
+
+// Recieved from server
+socket.on('updateGameInformation', ({room}) => {
+    if (room.name === currentRoomName) {
+        updateAllGameInformation(room);
+    }
 });
 
 /*  Below is responses specifically for updating client side information.
@@ -51,28 +61,26 @@ socket.on('updateClientCount', ({roomName, onlineUsers}) => {
     }
 });
 
-socket.on('updatedPlayer', ({player}) => {
-    currentPlayer = player;
+socket.on('canYouPlay', ({player}) => {
     // Are you the person that should be playing?
     if (currentUsername === player) {
-        let sum = 0;
         let result = [];
         for (let i = 1; i <= 6; i++) {
             let dice = Math.floor((Math.random() * 6) + 1);
             document.getElementById(`dice${i}`).innerText = dice;
             result.push(dice);
-            sum += dice;
         }
-        socket.emit('rollDice', {roomName: currentRoomName, result});
+        socket.emit('rollDice', {username: currentUsername, roomName: currentRoomName, result});
     }
 });
 
-socket.on('diceResult', ({roomName, result}) => {
-    if (currentRoomName === roomName) {
+socket.on('updateClientDice', ({room, result}) => {
+    if (currentRoomName === room.name) {
         for (let i = 1; i <= 6; i++) {
             document.getElementById(`dice${i}`).innerText = result[i-1];
         }
         console.log("Got dice results");
+        updateAllGameInformation(room);
     }
 });
 
@@ -106,9 +114,6 @@ document.getElementById('changeCatButton').addEventListener('click', function() 
 
 // Leave room button
 document.getElementById('leaveRoomButton').addEventListener('click', function () {
-    console.log(`${currentUsername} is disconnecting`);
-    socket.emit('removeUser', ({username: currentUsername, roomName: currentRoomName}));
-    socket.emit('updateRoomClientCount', ({roomName: currentRoomName}));
     window.location.href = '/test2.html';
 });
 
@@ -116,6 +121,16 @@ document.getElementById('leaveRoomButton').addEventListener('click', function ()
 document.getElementById('rollDiceButton').addEventListener('click', function () {
     socket.emit('getPlayer', {roomName: currentRoomName});
 });
+
+function updateAllGameInformation(room) {
+    gameInformationVBox.innerHTML = '';
+    for (let i = 0; i < room.clients.length; i++) {
+        const paragraph = document.createElement('p');
+        paragraph.id = "player" + i;
+        paragraph.textContent = room.clients[i] + "'s points: " + room.points[i];
+        gameInformationVBox.appendChild(paragraph);
+    }
+}
 
 
 

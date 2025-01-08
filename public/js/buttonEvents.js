@@ -10,6 +10,8 @@ const images = [
 // Value that iterates through images
 let index = 0;
 
+
+
 // Events that respond to server emits
 // Redirects user to game page.
 socket.on('redirectToPage', url => {
@@ -33,7 +35,10 @@ document.getElementById('changeCatButton').addEventListener('click', function() 
 });
 
 // Confirm Button
-document.getElementById('confirmButton').addEventListener('click', function() {
+const confirmButton = document.getElementById('confirmButton');
+confirmButton.addEventListener('click', function() {
+    confirmButton.disabled = true;
+    setTimeout(() => confirmButton.disabled = false, 100);
     const username = document.getElementById('usernameInput').value;
     const roomName = document.getElementById('roomInput').value;
 
