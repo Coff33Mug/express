@@ -36,9 +36,36 @@ button {
 .dice {
     color:black;
     border: 2px solid black;
+    background-color: white;
     display: inline;
-    padding:10px;
+    padding: 10px;
     margin: 5px;
+}
+
+.keepDiceButton {
+    background-color: LightGray;
+    padding-left: 15px;
+    padding-right: 15px;
+    margin-left: 5px;
+    margin-right: 11px;
+    margin-bottom: 15px;
+}
+
+#turnDisplay {
+    position: relative;
+    width: 300px;
+    height: 10px;
+    padding: 20px;
+    margin-bottom: 10px;
+    background-color: darkgray;
+    border-radius: 10px;
+}
+
+#turnDisplay p {
+    margin: 0;
+    position: absolute;               
+    top: 50%;                         
+    transform: translate(0, -50%);  
 }
 
 #gameInformationVBox {

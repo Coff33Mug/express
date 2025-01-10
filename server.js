@@ -23,16 +23,16 @@ let rooms = [];
 
 // Server side connection sending html files
 app.get('/', function(req, res, next) {
-    res.redirect('/test2.html');
+    res.redirect('/lobby.html');
 });
 
 // Responses to links for HTML files
-app.get('/test.html', function(req, res, next) { // Path name (...public/html/test.html)
-    res.sendFile(path.join(__dirname, 'public', 'html/test.html'));
+app.get('/game.html', function(req, res, next) { // Path name (...public/html/test.html)
+    res.sendFile(path.join(__dirname, 'public', 'html/game.html'));
 });
 
-app.get('/test2.html', function(req, res, next) {
-    res.sendFile(path.join(__dirname, 'public', 'html/test2.html'));
+app.get('/lobby.html', function(req, res, next) {
+    res.sendFile(path.join(__dirname, 'public', 'html/lobby.html'));
 });
 
 // Server's connection to port
@@ -92,7 +92,7 @@ io.on('connection', socket => {
         }
     });
 
-    socket.on('updateGameInfomation', ({roomName}) => {
+    socket.on('updateGameInformation', ({roomName}) => {
         const room = rooms.find(r => r.name === roomName);
         if (room) {
             io.emit('updateGameInformation', ({room})); // Sent to main.js
@@ -108,10 +108,6 @@ io.on('connection', socket => {
         let room = rooms.find(r => r.name === roomName);
         if (room) {
             const userIndex = room.clients.indexOf(username);
-            // Turn updating
-            room.turnNumber++;
-            room.turnNumber = room.turnNumber % room.clients.length;
-
             // Calculating points for the player
             let points = 0;
             for (let i = 0; i < 6; i++) {
@@ -121,6 +117,12 @@ io.on('connection', socket => {
                     points += 50;
                 }
             }
+
+            // Turn updating
+            if (checkForBust(result)) {
+                room.turnNumber++;
+                room.turnNumber = room.turnNumber % room.clients.length;
+            }
             room.points[userIndex] += points;
             
 
@@ -129,6 +131,15 @@ io.on('connection', socket => {
             console.log("Room not found in rollDice");
         }
     });
+    
+    
+    function checkForBust(result) {
+        if (!result.includes(1) && !result.includes(5)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 
     // Room Events
     /*
@@ -147,7 +158,7 @@ io.on('connection', socket => {
             tempRoomName = roomName;
             tempUsername = username;
             // console.log(tempRoomName + " " + tempUsername);  // working properly
-            socket.emit('redirectToPage', '/test.html'); // Sent to buttonEvents.js
+            socket.emit('redirectToPage', '/game.html'); // Sent to buttonEvents.js
         }
     });
 

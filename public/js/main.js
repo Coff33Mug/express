@@ -2,14 +2,17 @@ import instance from "./socketManager.js";
 
 
 const socket = instance;
-// const socket = io("http://localhost:3000/");
 const catImage = document.getElementById('catImage');
 const clientCountParagraph = document.getElementById('clientCount');
 const gameInformationVBox = document.getElementById('gameInformationVBox');
+const turnInformation = document.getElementById('turnDisplayParagraph');
+const keepDiceArray = new Array(6).fill(false);
 let currentRoom;
 let currentRoomName;
 let currentUsername;
 let currentPlayer;
+let firstTurn = true;
+let prevResult = new Array(6).fill(0);
 
 // Events that respond to server emits
 
@@ -25,7 +28,7 @@ window.addEventListener('load', () => {
     // Checks for if the user reloaded webpage
     const navigationType = performance.getEntriesByType("navigation")[0].type;
     if (navigationType === 'reload') {
-        window.location.href = '/test2.html';
+        window.location.href = '/lobby.html';
     }
 });
 
@@ -33,16 +36,19 @@ window.addEventListener('unload', () => {
     console.log(`${currentUsername} is disconnecting`);
     socket.emit('removeUser', ({username: currentUsername, roomName: currentRoomName}));
     socket.emit('updateRoomClientCount', ({roomName: currentRoomName}));
-    socket.emit('updateGameInfomation', ({roomName: currentRoomName}));
+    socket.emit('updateGameInformation', ({roomName: currentRoomName}));
 });
 
+/* Request from server to update all client side information. 
+This includes information about the game to other clients in the room
+*/ 
 socket.on('updatedInformation', ({room, username}) => {
     currentUsername = username;
     currentRoomName = room.name;
     currentPlayer = room.turnNumber;
     currentRoom = room;
     clientCountParagraph.innerText = "Current online users: " + room.clients.length;
-    socket.emit('updateGameInfomation', ({roomName: currentRoomName}));
+    socket.emit('updateGameInformation', ({roomName: currentRoomName}));
 });
 
 // Recieved from server
@@ -61,19 +67,9 @@ socket.on('updateClientCount', ({roomName, onlineUsers}) => {
     }
 });
 
-socket.on('canYouPlay', ({player}) => {
-    // Are you the person that should be playing?
-    if (currentUsername === player) {
-        let result = [];
-        for (let i = 1; i <= 6; i++) {
-            let dice = Math.floor((Math.random() * 6) + 1);
-            document.getElementById(`dice${i}`).innerText = dice;
-            result.push(dice);
-        }
-        socket.emit('rollDice', {username: currentUsername, roomName: currentRoomName, result});
-    }
-});
-
+/*  Recieved by every client in a room to update both the dice 
+alongside clientside game info
+*/
 socket.on('updateClientDice', ({room, result}) => {
     if (currentRoomName === room.name) {
         for (let i = 1; i <= 6; i++) {
@@ -114,13 +110,69 @@ document.getElementById('changeCatButton').addEventListener('click', function() 
 
 // Leave room button
 document.getElementById('leaveRoomButton').addEventListener('click', function () {
-    window.location.href = '/test2.html';
+    window.location.href = '/lobby.html';
 });
 
 // Dice rolling element
 document.getElementById('rollDiceButton').addEventListener('click', function () {
     socket.emit('getPlayer', {roomName: currentRoomName});
 });
+
+/*  Socket event that recieves the player from the server, checks if you're the player,
+    then updates dice based on what is kept and sends the results to the server 
+    to broadcast to everyone in the room.
+*/
+socket.on('canYouPlay', ({player}) => {
+    // Are you the person that should be playing?
+    if (currentUsername !== player) {
+        return;
+    }
+    
+    let result = [];
+    if (firstTurn === true) {
+        currentPlayer = player;
+        for (let i = 1; i <= 6; i++) {
+            let dice = Math.floor((Math.random() * 6) + 1);
+            document.getElementById(`dice${i}`).innerText = dice;
+            result.push(dice);
+        }
+        prevResult = result;
+        firstTurn = false;
+    } else {
+        currentPlayer = player;
+        result = prevResult;
+        for (let i = 0; i <= 5; i++) {
+            if (keepDiceArray[i] === false) {
+                let dice = Math.floor((Math.random() * 6) + 1);
+                document.getElementById(`dice${i+1}`).innerText = dice;
+                result[i] = dice;
+            }
+        }
+        prevResult = result;
+    }
+    
+    socket.emit('rollDice', {username: currentUsername, roomName: currentRoomName, result});
+});
+
+/*  Event listener for the buttons that allow you to keep dice.
+Will only allow you to keep dice if it's not your first roll
+*/
+for (let i = 0; i <= 5; i++) {
+    const keepButton = document.getElementById(`keepDiceButton${i+1}`);
+    keepButton.addEventListener('click', function () {
+        if (firstTurn === true) {
+            return;
+        }
+        
+        if(keepDiceArray[i] === false) {
+            keepDiceArray[i] = true;
+            keepButton.style.backgroundColor = '#FFCCCB';
+        } else {
+            keepDiceArray[i] = false;
+            keepButton.style.backgroundColor = 'LightGray';
+        }
+    });
+}
 
 function updateAllGameInformation(room) {
     gameInformationVBox.innerHTML = '';
@@ -130,6 +182,7 @@ function updateAllGameInformation(room) {
         paragraph.textContent = room.clients[i] + "'s points: " + room.points[i];
         gameInformationVBox.appendChild(paragraph);
     }
+    turnInformation.textContent = `${room.clients[room.turnNumber]}'s turn`;
 }
 
 
