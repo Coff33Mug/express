@@ -1,5 +1,4 @@
 import instance from "./socketManager.js";
-import Room from "./room.js";
 const socket = instance;
 
 // images
@@ -10,7 +9,8 @@ const images = [
 
 // Value that iterates through images
 let index = 0;
-let currentRoom = new Room();
+
+
 
 // Events that respond to server emits
 // Redirects user to game page.
@@ -35,21 +35,27 @@ document.getElementById('changeCatButton').addEventListener('click', function() 
 });
 
 // Confirm Button
-document.getElementById('confirmButton').addEventListener('click', function() {
+const confirmButton = document.getElementById('confirmButton');
+confirmButton.addEventListener('click', function() {
+    confirmButton.disabled = true;
+    setTimeout(() => confirmButton.disabled = false, 100);
     const username = document.getElementById('usernameInput').value;
     const roomName = document.getElementById('roomInput').value;
+
+    if (!username || !roomName) {
+        console.log("bro did not put username or room name");
+        return;
+    }
     
     // Request to update room list on client side
     socket.emit('getRoomList');
     socket.on('currentRoomList', newRoomList => {
+        const room = newRoomList.find(room => room.name === roomName);
         // Checks if room exist
-        if (roomName != "" && newRoomList.find(room => room.name === roomName)) {
-            currentRoom.updateName(roomName);
-            currentRoom.addClient(username);
-
+        if (roomName != "" && room && !(room.clients.includes(username))) {
             socket.emit('joinRoom', {username: username, roomName: roomName});
         } else {
-            console.log("Room does not exist");
+            console.log("Room does not exist or username in use");
         }
     });
 

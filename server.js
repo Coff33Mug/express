@@ -23,16 +23,16 @@ let rooms = [];
 
 // Server side connection sending html files
 app.get('/', function(req, res, next) {
-    res.redirect('/test2.html');
+    res.redirect('/lobby.html');
 });
 
 // Responses to links for HTML files
-app.get('/test.html', function(req, res, next) { // Path name (...public/html/test.html)
-    res.sendFile(path.join(__dirname, 'public', 'html/test.html'));
+app.get('/game.html', function(req, res, next) { // Path name (...public/html/test.html)
+    res.sendFile(path.join(__dirname, 'public', 'html/game.html'));
 });
 
-app.get('/test2.html', function(req, res, next) {
-    res.sendFile(path.join(__dirname, 'public', 'html/test2.html'));
+app.get('/lobby.html', function(req, res, next) {
+    res.sendFile(path.join(__dirname, 'public', 'html/lobby.html'));
 });
 
 // Server's connection to port
@@ -42,12 +42,14 @@ server.listen(port, () => {
 
 // Client side events
 io.on('connection', socket => {
-    // console.log("New person connected");
-    // io.emit('message', 'New person connected'); // Sent to main.js
-
     // Response for client disconnect
     socket.on('disconnect', () => {
         io.emit('message', 'A person disconnected');
+    });
+
+    socket.on('forceDisconnect', () => {
+        socket.disconnect();
+        console.log("force disconnect done");
     });
 
     /* // Game events
@@ -59,10 +61,20 @@ io.on('connection', socket => {
         const room = rooms.find(r => r.name === tempRoomName);
         if (room) {
             const onlineUsers = room.clients.length;
-            socket.emit('updatedInformation', ({username: tempUsername, roomName: tempRoomName, onlineUsers: onlineUsers}));
+            let player = room.clients[room.turnNumber];
+            socket.emit('updatedInformation', ({room: room, username: tempUsername}));
             io.emit('updateClientCount', ({roomName: tempRoomName, onlineUsers})); // Sent to main.js
         } else {
-            console.log("Room not found");
+            // Still runs when the last person in the room leaves
+            console.log("Room not found in requestAllInformation");
+        }
+    });
+
+    socket.on('getPlayer', ({roomName}) => {
+        let room = rooms.find(r => r.name === roomName);
+        if (room) {
+            let player = room.clients[room.turnNumber];
+            socket.emit('canYouPlay', ({player}));
         }
     });
 
@@ -76,30 +88,58 @@ io.on('connection', socket => {
             const onlineUsers = room.clients.length;
             io.emit('updateClientCount', ({roomName, onlineUsers})); // Sent to main.js
         } else {
-            console.log("Room not found");
+            console.log("Room not found in updateRoomClientCount");
         }
     });
 
-    socket.on('removeUser', ({username, roomName}) => {
-        console.log("Attempting to remove user");
+    socket.on('updateGameInformation', ({roomName}) => {
         const room = rooms.find(r => r.name === roomName);
-        
-        // if room doesn't exist, throw an error
-        if(room) {
-            room.clients = room.clients.filter(client => client !== username);
-            io.emit('updateClientCount', room.clients.length);
-            console.log(`${username} was removed from ${roomName}`);
+        if (room) {
+            io.emit('updateGameInformation', ({room})); // Sent to main.js
         } else {
-            console.log("Can't find room to remove client");
+            console.log("Room not found in updateGameInformation");
         }
     });
 
     // Emits results to all online clients
-    socket.on('rollDice', results => {
-        console.log(results);
+    socket.on('rollDice', ({username, roomName, result}) => {
+        console.log(result);
         console.log(rooms);
-        io.emit('diceResult', results); // Sent to main.js
+        let room = rooms.find(r => r.name === roomName);
+        if (room) {
+            const userIndex = room.clients.indexOf(username);
+            // Calculating points for the player
+            let points = 0;
+            for (let i = 0; i < 6; i++) {
+                if (result[i] === 1) {
+                    points += 100;
+                } else if (result[i] === 5) {
+                    points += 50;
+                }
+            }
+
+            // Turn updating
+            if (checkForBust(result)) {
+                room.turnNumber++;
+                room.turnNumber = room.turnNumber % room.clients.length;
+            }
+            room.points[userIndex] += points;
+            
+
+            io.emit('updateClientDice', ({room, result})); // Sent to main.js
+        } else {
+            console.log("Room not found in rollDice");
+        }
     });
+    
+    
+    function checkForBust(result) {
+        if (!result.includes(1) && !result.includes(5)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 
     // Room Events
     /*
@@ -112,13 +152,13 @@ io.on('connection', socket => {
         // checks to see if there was a found room
         let room = rooms.find(r => r.name === roomName);
         if (room) {
-            console.log("attempting to join room");
             room.clients.push(username);
-            socket.join(roomName);
+            room.points.push(0);
+            socket.join(roomName)
             tempRoomName = roomName;
             tempUsername = username;
             // console.log(tempRoomName + " " + tempUsername);  // working properly
-            socket.emit('redirectToPage', '/test.html'); // Sent to buttonEvents.js
+            socket.emit('redirectToPage', '/game.html'); // Sent to buttonEvents.js
         }
     });
 
@@ -131,24 +171,54 @@ io.on('connection', socket => {
     socket.on('addRoom', roomName => {
         const room = {
             name: roomName,
-            clients: []
+            clients: [],
+            points: [],
+            turnNumber: 0
         }
         rooms.push(room);
         console.log(`The room ${roomName} was added`);
     });
 
-    // socket.on('removeUser', ({username, roomName}) => {
-    //     console.log("Attempting to remove user");
-    //     const room = rooms.find(r => r.name === roomName);
+    socket.on('removeUser', ({username, roomName}) => {
+        const room = rooms.find(r => r.name === roomName);
         
-    //     // if room doesn't exist, throw an error
-    //     if(room) {
-    //         room.clients = room.clients.filter(client => client !== username);
-    //         io.emit('updateClientCount', room.clients.length);
-    //         console.log(`${username} was removed from ${roomName}`);
-    //     } else {
-    //         console.log("Can't find room to remove client");
-    //     }
-    // });
+        // if room doesn't exist, throw an error
+        if (!room) {
+            console.log("Can't find room to remove client");
+            return;
+        }
+        
+        const userIndex = room.clients.indexOf(username);
+        // Removes user from room
+        room.clients = room.clients.filter(client => client !== username);
+        room.points.splice(userIndex, 1);
+
+        /* Updates turn number to prevent turn softlock
+           Ex. It is p2's turn and they leave, nobody can roll now.
+           
+        Did they have turn? 
+            Yes -> 
+                turn # = 0 
+            No -> Were they behind the player who had the turn? 
+                Yes -> turn # - 1 
+                No -> do nothing 
+        */
+        if (userIndex === room.turnNumber) {
+            // Basically sets turnNumber to 0
+            room.turnNumber = room.turnNumber % room.clients.length;
+        } else if (userIndex < room.turnNumber) {
+            room.turnNumber--;
+        }
+        console.log(`${username} was removed from ${roomName}`);
+        
+        // If the room has nobody in it, delete the room.
+        if (room.clients.length === 0) {
+            const index = rooms.findIndex(room => room.name === roomName);
+            if (index !== -1) {
+                rooms.splice(index, 1);
+            }
+        }
+    });
+
 });
 
