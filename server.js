@@ -46,16 +46,16 @@ io.on('connection', socket => {
     socket.on('disconnect', () => {
         io.emit('message', 'A person disconnected');
     });
-
+    
     socket.on('forceDisconnect', () => {
         socket.disconnect();
         console.log("force disconnect done");
     });
-
+    
     /* // Game events
-        This request comes from main.js after a person joins a room through the 
-        confirm button. This sends information that is given through button events
-        to main.js to manage the room.
+    This request comes from main.js after a person joins a room through the 
+    confirm button. This sends information that is given through button events
+    to main.js to manage the room.
     */
     socket.on('requestAllInformation', () => {
         const room = rooms.find(r => r.name === tempRoomName);
@@ -69,7 +69,7 @@ io.on('connection', socket => {
             console.log("Room not found in requestAllInformation");
         }
     });
-
+    
     socket.on('getPlayer', ({roomName}) => {
         let room = rooms.find(r => r.name === roomName);
         if (room) {
@@ -77,10 +77,10 @@ io.on('connection', socket => {
             socket.emit('canYouPlay', ({player}));
         }
     });
-
+    
     /*
-        This request comes from main.js after a person leaves. requestAllInformation... should
-        update the total amount of users online for the client when someone joins.
+    This request comes from main.js after a person leaves. requestAllInformation... should
+    update the total amount of users online for the client when someone joins.
     */
     socket.on('updateRoomClientCount', ({roomName}) => {
         const room = rooms.find(r => r.name === roomName);
@@ -91,7 +91,7 @@ io.on('connection', socket => {
             console.log("Room not found in updateRoomClientCount");
         }
     });
-
+    
     socket.on('updateGameInformation', ({roomName}) => {
         const room = rooms.find(r => r.name === roomName);
         if (room) {
@@ -100,38 +100,92 @@ io.on('connection', socket => {
             console.log("Room not found in updateGameInformation");
         }
     });
-
+    
     // Emits results to all online clients
-    socket.on('rollDice', ({username, roomName, result}) => {
+    socket.on('rollDice', ({username, roomName, result, resultForPoints}) => {
         console.log(result);
         console.log(rooms);
         let room = rooms.find(r => r.name === roomName);
-        if (room) {
-            const userIndex = room.clients.indexOf(username);
-            // Calculating points for the player
-            let points = 0;
-            for (let i = 0; i < 6; i++) {
-                if (result[i] === 1) {
-                    points += 100;
-                } else if (result[i] === 5) {
-                    points += 50;
-                }
-            }
-
-            // Turn updating
-            if (checkForBust(result)) {
-                room.turnNumber++;
-                room.turnNumber = room.turnNumber % room.clients.length;
-            }
-            room.points[userIndex] += points;
-            
-
-            io.emit('updateClientDice', ({room, result})); // Sent to main.js
-        } else {
+        
+        if (!room) {
             console.log("Room not found in rollDice");
         }
+        
+        const userIndex = room.clients.indexOf(username);
+        let points = calculatePoints(resultForPoints);
+        
+        // Give up your turn if you bust
+        if (points === 0) {
+            room.turnNumber++;
+            room.turnNumber = room.turnNumber % room.clients.length;
+            room.possiblePoints[userIndex] = 0;
+        }
+        
+        // TODO: Issue with rerolled dice still counting as points
+        room.possiblePoints[userIndex] = points;
+        
+        io.emit('updateClientDice', ({room, result})); // Sent to main.js
     });
     
+    socket.on('keepHand', ({username, roomName}) => {
+        console.log(rooms);
+        let room = rooms.find(r => r.name === roomName);
+        if (!room) {
+            console.log("Room not found in keepHand");
+        }
+        
+        // Sets points for the player
+        const userIndex = room.clients.indexOf(username);
+        room.points[userIndex] += room.possiblePoints[userIndex];
+        room.possiblePoints[userIndex] = 0;
+        // Updates turn
+        room.turnNumber++;
+        room.turnNumber = room.turnNumber % room.clients.length;
+        io.emit('updateGameInformation', ({room})); // Sent to main.js
+    });
+    
+    function calculatePoints(result) {
+        let points = 0
+        
+        // Creates an array of the amount of times a roll appears
+        const frequencyOfNumber = new Array(6).fill(0);
+        for (let i = 0; i < result.length; i++) {
+            frequencyOfNumber[result[i]-1]++;
+        }
+
+        // Checks for instances of triplet dice roll
+        for (let i = 0; i < 6; i++) {
+            if (frequencyOfNumber[i] >= 3) {
+                // If you got triple ones, 1000 points!
+                if (i === 0) {
+                    points += 1000;
+                } else {
+                // If you got triple x's, you get x * 100 points!
+                    points += (i+1) * 100;
+                }
+                frequencyOfNumber[i] -= 3;
+            }
+        }
+        
+        // Checks for a straight
+        if (frequencyOfNumber.every(num => num === 1)) {
+            points += 1500;
+            
+            for (let i = 0; i < 6; i++) {
+                frequencyOfNumber[i]--;
+            }
+        }
+        
+        /*
+        TODO: remember to add dice adding
+        */
+        
+        // Adds any remaining points for 1s and 5s
+        points += frequencyOfNumber[0] * 100;
+        points += frequencyOfNumber[4] * 50;
+        
+        return points;
+    }
     
     function checkForBust(result) {
         if (!result.includes(1) && !result.includes(5)) {
@@ -140,12 +194,12 @@ io.on('connection', socket => {
             return false;
         }
     }
-
+    
     // Room Events
     /*
-        This request comes from buttonEvents.js
-        Puts client connection into a room, for some reason, emits to anything in
-        main.js does not work. So any request for main.js must come from main.js
+    This request comes from buttonEvents.js
+    Puts client connection into a room, for some reason, emits to anything in
+    main.js does not work. So any request for main.js must come from main.js
     */
     socket.on('joinRoom', ({username, roomName}) => {
         // Checks for the existence of the room, the if statement
@@ -154,6 +208,7 @@ io.on('connection', socket => {
         if (room) {
             room.clients.push(username);
             room.points.push(0);
+            room.possiblePoints.push(0);
             socket.join(roomName)
             tempRoomName = roomName;
             tempUsername = username;
@@ -161,7 +216,7 @@ io.on('connection', socket => {
             socket.emit('redirectToPage', '/game.html'); // Sent to buttonEvents.js
         }
     });
-
+    
     // Sends room list to client
     socket.on('getRoomList', () => {
         socket.emit('currentRoomList', rooms); // Sent to buttonEvents.js
@@ -173,12 +228,13 @@ io.on('connection', socket => {
             name: roomName,
             clients: [],
             points: [],
+            possiblePoints: [],
             turnNumber: 0
         }
         rooms.push(room);
         console.log(`The room ${roomName} was added`);
     });
-
+    
     socket.on('removeUser', ({username, roomName}) => {
         const room = rooms.find(r => r.name === roomName);
         
@@ -192,16 +248,17 @@ io.on('connection', socket => {
         // Removes user from room
         room.clients = room.clients.filter(client => client !== username);
         room.points.splice(userIndex, 1);
-
+        room.possiblePoints.splice(userIndex, 1);
+        
         /* Updates turn number to prevent turn softlock
-           Ex. It is p2's turn and they leave, nobody can roll now.
-           
+        Ex. It is p2's turn and they leave, nobody can roll now.
+        
         Did they have turn? 
-            Yes -> 
-                turn # = 0 
-            No -> Were they behind the player who had the turn? 
-                Yes -> turn # - 1 
-                No -> do nothing 
+        Yes -> 
+        turn # = 0 
+        No -> Were they behind the player who had the turn? 
+        Yes -> turn # - 1 
+        No -> do nothing 
         */
         if (userIndex === room.turnNumber) {
             // Basically sets turnNumber to 0
@@ -219,6 +276,6 @@ io.on('connection', socket => {
             }
         }
     });
-
+    
 });
 

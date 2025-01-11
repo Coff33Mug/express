@@ -75,7 +75,7 @@ socket.on('updateClientDice', ({room, result}) => {
         for (let i = 1; i <= 6; i++) {
             document.getElementById(`dice${i}`).innerText = result[i-1];
         }
-        console.log("Got dice results");
+        console.log("Got dice results and possible points");
         updateAllGameInformation(room);
     }
 });
@@ -129,16 +129,20 @@ socket.on('canYouPlay', ({player}) => {
     }
     
     let result = [];
+    let resultForPoints = [];
+    // If it's the player's first turn, roll all the dice.
     if (firstTurn === true) {
         currentPlayer = player;
         for (let i = 1; i <= 6; i++) {
             let dice = Math.floor((Math.random() * 6) + 1);
             document.getElementById(`dice${i}`).innerText = dice;
             result.push(dice);
+            resultForPoints.push(dice);
         }
         prevResult = result;
         firstTurn = false;
     } else {
+        resultForPoints = [];
         currentPlayer = player;
         result = prevResult;
         for (let i = 0; i <= 5; i++) {
@@ -146,12 +150,21 @@ socket.on('canYouPlay', ({player}) => {
                 let dice = Math.floor((Math.random() * 6) + 1);
                 document.getElementById(`dice${i+1}`).innerText = dice;
                 result[i] = dice;
+                resultForPoints.push(dice);
             }
         }
         prevResult = result;
     }
     
-    socket.emit('rollDice', {username: currentUsername, roomName: currentRoomName, result});
+    socket.emit('rollDice', {
+        username: currentUsername, 
+        roomName: currentRoomName, 
+        result, 
+        resultForPoints});
+});
+
+document.getElementById('keepHandButton').addEventListener('click', function () {
+    socket.emit('keepHand', {username: currentUsername, roomName: currentRoomName});
 });
 
 /*  Event listener for the buttons that allow you to keep dice.
