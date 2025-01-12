@@ -1,12 +1,12 @@
 import instance from "./socketManager.js";
 
-
 const socket = instance;
 const catImage = document.getElementById('catImage');
 const clientCountParagraph = document.getElementById('clientCount');
 const gameInformationVBox = document.getElementById('gameInformationVBox');
 const turnInformation = document.getElementById('turnDisplayParagraph');
 const keepDiceArray = new Array(6).fill(false);
+let previouslyKeptDice = new Array(6).fill(false);
 let currentRoom;
 let currentRoomName;
 let currentUsername;
@@ -73,7 +73,8 @@ alongside clientside game info
 socket.on('updateClientDice', ({room, result}) => {
     if (currentRoomName === room.name) {
         for (let i = 1; i <= 6; i++) {
-            document.getElementById(`dice${i}`).innerText = result[i-1];
+            document.getElementById(`dice${i}`).src = `../images/dice${result[i-1]}.png`
+            document.getElementById(`dice${i}`).alt = result[i-1];
         }
         console.log("Got dice results and possible points");
         updateAllGameInformation(room);
@@ -93,8 +94,8 @@ socket.on('joinedRoom', username => {
 // Change cat button
 let index = 0;
 const images = [
-    "../cat kaboom.gif",
-    "../cat.gif", 
+    "../images/cat kaboom.gif",
+    "../images/cat.gif", 
 ];
 
 document.getElementById('changeCatButton').addEventListener('click', function() {
@@ -129,13 +130,15 @@ socket.on('canYouPlay', ({player}) => {
     }
     
     let result = [];
+    let keptDice = [];
     let resultForPoints = [];
     // If it's the player's first turn, roll all the dice.
     if (firstTurn === true) {
         currentPlayer = player;
         for (let i = 1; i <= 6; i++) {
             let dice = Math.floor((Math.random() * 6) + 1);
-            document.getElementById(`dice${i}`).innerText = dice;
+            document.getElementById(`dice${i}`).alt = dice;
+            document.getElementById(`dice${i}`).src = `../images/dice${dice}.png`
             result.push(dice);
             resultForPoints.push(dice);
         }
@@ -148,27 +151,35 @@ socket.on('canYouPlay', ({player}) => {
         for (let i = 0; i <= 5; i++) {
             if (keepDiceArray[i] === false) {
                 let dice = Math.floor((Math.random() * 6) + 1);
-                document.getElementById(`dice${i+1}`).innerText = dice;
+                document.getElementById(`dice${i+1}`).alt = dice;
+                document.getElementById(`dice${i+1}`).src = `../images/dice${dice}.png`
                 result[i] = dice;
                 resultForPoints.push(dice);
+            } else{
+                keptDice.push(result[i]);
             }
         }
+
+        console.log(keptDice);
         prevResult = result;
+        disableKeepDiceButtons(keepDiceArray);
     }
     
     socket.emit('rollDice', {
         username: currentUsername, 
         roomName: currentRoomName, 
         result, 
+        keptDice,
         resultForPoints});
 });
 
+// Event listener for keep hand, tells server to update user points.
 document.getElementById('keepHandButton').addEventListener('click', function () {
     socket.emit('keepHand', {username: currentUsername, roomName: currentRoomName});
 });
 
 /*  Event listener for the buttons that allow you to keep dice.
-Will only allow you to keep dice if it's not your first roll
+    Will only allow you to keep dice if it's not your first roll
 */
 for (let i = 0; i <= 5; i++) {
     const keepButton = document.getElementById(`keepDiceButton${i+1}`);
@@ -186,6 +197,26 @@ for (let i = 0; i <= 5; i++) {
         }
     });
 }
+
+function disableKeepDiceButtons(keepDiceArray) {
+    for (let i = 0; i <= 5; i++) {
+        const keepButton = document.getElementById(`keepDiceButton${i+1}`);
+        if (keepDiceArray[i] === true) {
+            keepButton.disabled = true;
+        }
+    }
+}
+
+socket.on('enableKeepDiceButtons', () => {
+    for (let i = 0; i <= 5; i++) {
+        const keepButton = document.getElementById(`keepDiceButton${i+1}`);
+        if (keepDiceArray[i] === true) {
+            keepButton.disabled = false;
+            keepDiceArray[i] = false;
+            keepButton.style.backgroundColor = 'LightGray';
+        }
+    }
+});
 
 function updateAllGameInformation(room) {
     gameInformationVBox.innerHTML = '';

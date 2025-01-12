@@ -102,7 +102,7 @@ io.on('connection', socket => {
     });
     
     // Emits results to all online clients
-    socket.on('rollDice', ({username, roomName, result, resultForPoints}) => {
+    socket.on('rollDice', ({username, roomName, result, keptDice, resultForPoints}) => {
         console.log(result);
         console.log(rooms);
         let room = rooms.find(r => r.name === roomName);
@@ -113,6 +113,7 @@ io.on('connection', socket => {
         
         const userIndex = room.clients.indexOf(username);
         let points = calculatePoints(resultForPoints);
+        let keptPoints = calculatePoints(keptDice);
         
         // Give up your turn if you bust
         if (points === 0) {
@@ -121,8 +122,9 @@ io.on('connection', socket => {
             room.possiblePoints[userIndex] = 0;
         }
         
-        // TODO: Issue with rerolled dice still counting as points
+        // TODO: Issue with rerolling, kept dice not counting
         room.possiblePoints[userIndex] = points;
+        room.possiblePoints[userIndex] += keptPoints;
         
         io.emit('updateClientDice', ({room, result})); // Sent to main.js
     });
@@ -141,6 +143,7 @@ io.on('connection', socket => {
         // Updates turn
         room.turnNumber++;
         room.turnNumber = room.turnNumber % room.clients.length;
+        socket.emit('enableKeepDiceButtons');
         io.emit('updateGameInformation', ({room})); // Sent to main.js
     });
     
@@ -151,6 +154,20 @@ io.on('connection', socket => {
         const frequencyOfNumber = new Array(6).fill(0);
         for (let i = 0; i < result.length; i++) {
             frequencyOfNumber[result[i]-1]++;
+        }
+
+        // Checks for instance of 6 of a kind
+        for (let i = 0; i < 6; i++) {
+            if (frequencyOfNumber[i] === 6) {
+                // If you get six 1's, 5000 points!
+                if (i === 0) {
+                    points += 5000;
+                } else {
+                // If you got six x's, you get x * 500 points!
+                    points += (i+1) * 500;
+                }
+                frequencyOfNumber[i] -= 6;
+            }
         }
 
         // Checks for instances of triplet dice roll

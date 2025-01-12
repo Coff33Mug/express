@@ -3,14 +3,12 @@ const socket = instance;
 
 // images
 const images = [
-    "../cat kaboom.gif",
-    "../cat.gif", 
+    "../images/cat kaboom.gif",
+    "../images/cat.gif", 
 ];
 
 // Value that iterates through images
 let index = 0;
-
-
 
 // Events that respond to server emits
 // Redirects user to game page.

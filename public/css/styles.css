@@ -42,6 +42,10 @@ button {
     margin: 5px;
 }
 
+.diceImage {
+    width: 66px;
+}
+
 .keepDiceButton {
     background-color: LightGray;
     padding-left: 15px;
