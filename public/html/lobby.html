@@ -8,19 +8,33 @@
 
 </head>
 <body>
+    <div class="contentWrapper"></div>
     <img id= "catImage" src="../images/cat.gif"> </img>
-    <p>Username</p>
-    <input type="name" id="usernameInput">
-    <p>Room name</p>
-    <input type="name" id="roomInput">
+    <div id="currentRooms"></div>
+    <div id="inputContainer">
+        <p>Username</p>
+        <input type="name" id="usernameInput">
+
+        <!-- Room display -->
+        <div id="roomDisplayBox" class="roomDisplayBox">
+            <u style="font-size: 20px;">Rooms</u>
+            <p></p>
+        </div>
+        
+        <p>Room name</p>
+        <input type="name" id="roomInput">
+    </div>
 
     <div class="contentWrapper">
         <button id="confirmButton" type="button">Confirm</button>
         <button id="createRoom" type="button">Create Room</button>
     </div>
 
+    <div class="contentWrapper">
+        <button id="refreshRoomsButton" type="button">Refresh Rooms</button>
+        <button id="changeCatButton" type="button">Change Cat</button>
+    </div>
     
-    <button id="changeCatButton" type="button">Change Cat</button>
     <script src="/socket.io/socket.io.js"></script>
     <script type="module"src="../js/socketManager.js"></script>
     <script type="module" src="../js/buttonEvents.js"></script>

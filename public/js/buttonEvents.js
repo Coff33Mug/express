@@ -47,7 +47,7 @@ confirmButton.addEventListener('click', function() {
     
     // Request to update room list on client side
     socket.emit('getRoomList');
-    socket.on('currentRoomList', newRoomList => {
+    socket.once('currentRoomList', newRoomList => {
         const room = newRoomList.find(room => room.name === roomName);
         // Checks if room exist
         if (roomName != "" && room && !(room.clients.includes(username))) {
@@ -64,11 +64,37 @@ document.getElementById('createRoom').addEventListener('click', function() {
     const roomName = document.getElementById('roomInput').value;
     // Request to update room list on client side
     socket.emit('getRoomList');
-    socket.on('currentRoomList', newRoomList => {
+    socket.once('currentRoomList', newRoomList => {
         // Adds the room given that it doesn't exist
         if (roomName != "" && !(newRoomList.find(room => room.name.includes(roomName)))) {
             socket.emit('addRoom', roomName);
             console.log("Room Created");
+        }
+    });
+});
+
+document.getElementById('refreshRoomsButton').addEventListener('click', function() {
+    // Remove paragraphs not working.
+    const roomDisplayBox = document.querySelector('.roomDisplayBox');
+    const paragraphs = roomDisplayBox.querySelectorAll('p');
+
+    paragraphs.forEach(paragraph => {
+        roomDisplayBox.removeChild(paragraph);
+    });
+
+    socket.emit('refreshRooms');
+    socket.once('refreshRooms', rooms => {
+        // Checks if rooms exist.
+        if (rooms.length === 0) {
+            const paragraph = document.createElement('p');
+            paragraph.textContent = "No rooms currently online";
+            roomDisplayBox.appendChild(paragraph);
+        } else {
+            for (let i = 0; i < rooms.length; i++) {
+                const paragraph = document.createElement('p');
+                paragraph.textContent = rooms[i].name + ": " + rooms[i].clients.length + " Online Users";
+                roomDisplayBox.appendChild(paragraph);
+            }
         }
     });
 });

@@ -238,6 +238,10 @@ io.on('connection', socket => {
     socket.on('getRoomList', () => {
         socket.emit('currentRoomList', rooms); // Sent to buttonEvents.js
     });
+
+    socket.on('refreshRooms', () => {
+        socket.emit('refreshRooms', rooms); // Sent to buttonEvents.js
+    });
     
     // Adds a room to the array of rooms
     socket.on('addRoom', roomName => {

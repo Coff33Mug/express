@@ -21,6 +21,46 @@ button {
         right: 10px;
 }
 
+/* Lobby CSS */
+#inputContainer {
+    position: relative;
+}
+
+#inputContainer .roomDisplayBox{
+    width: 300px;
+    height: 200px;
+    padding: 5px;
+    
+    background-color: darkgray;
+    border-color: black;
+    border-style: solid;
+    border-radius: 50px;
+    overflow-y: auto;
+    position: absolute;
+    left: 225px;
+    top: 10px;
+    transition: 0.5s;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center; 
+}
+
+.roomDisplayBox p {
+    display: block;
+    text-size-adjust: 20px;
+    margin: 0;
+}
+
+.roomDisplayBox u {
+    display: block;
+}
+
+#inputContainer .roomDisplayBox:hover{
+    transform: scale(1.05);
+    background-color: maroon;
+}
+
 /* Flex Box for dice,  */
 .contentWrapper {
     display: flex;
@@ -85,5 +125,6 @@ button {
 #clientCount {
     font-size: large;
 }
+
 
 

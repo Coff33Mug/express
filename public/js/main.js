@@ -122,6 +122,10 @@ document.getElementById('rollDiceButton').addEventListener('click', function () 
 /*  Socket event that recieves the player from the server, checks if you're the player,
     then updates dice based on what is kept and sends the results to the server 
     to broadcast to everyone in the room.
+
+    Results is the dice that is shown to the client
+    Kept dice is to calculate the points of what you previously had
+    resultsForPoints is to calculate the new dice you just rolled
 */
 socket.on('canYouPlay', ({player}) => {
     // Are you the person that should be playing?
@@ -138,24 +142,28 @@ socket.on('canYouPlay', ({player}) => {
         for (let i = 1; i <= 6; i++) {
             let dice = Math.floor((Math.random() * 6) + 1);
             document.getElementById(`dice${i}`).alt = dice;
-            document.getElementById(`dice${i}`).src = `../images/dice${dice}.png`
+            animateDice(dice, i-1);
+            
             result.push(dice);
             resultForPoints.push(dice);
         }
         prevResult = result;
         firstTurn = false;
     } else {
+        // If it isn't your first turn, check whatever hasn't been kept and reroll
         resultForPoints = [];
         currentPlayer = player;
         result = prevResult;
         for (let i = 0; i <= 5; i++) {
             if (keepDiceArray[i] === false) {
+                // Results is the dice that is shown to the client
                 let dice = Math.floor((Math.random() * 6) + 1);
                 document.getElementById(`dice${i+1}`).alt = dice;
-                document.getElementById(`dice${i+1}`).src = `../images/dice${dice}.png`
+                animateDice(dice, i);
                 result[i] = dice;
                 resultForPoints.push(dice);
             } else{
+                // Kept dice is to calculate the points of what you previously had
                 keptDice.push(result[i]);
             }
         }
@@ -172,6 +180,25 @@ socket.on('canYouPlay', ({player}) => {
         keptDice,
         resultForPoints});
 });
+
+function animateDice(dice, index) {
+    let delay = 15;
+    let delayIncrement = 50;
+
+    function switchDice() {
+        if (delay < 400) {
+            delay += delayIncrement;
+            delayIncrement += 50;
+            let randomDice = Math.floor((Math.random() * 6) + 1);
+            document.getElementById(`dice${index+1}`).src = `../images/dice${randomDice}.png`
+            setTimeout(switchDice, delay);
+        } else {
+            document.getElementById(`dice${index+1}`).src = `../images/dice${dice}.png`
+        }
+    }
+
+    switchDice();
+}
 
 // Event listener for keep hand, tells server to update user points.
 document.getElementById('keepHandButton').addEventListener('click', function () {
