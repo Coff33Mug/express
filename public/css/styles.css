@@ -1,3 +1,99 @@
+* {
+    margin: 0;
+}
+
+/*  Content Wrappers
+    Used in lobby and game for dice
+
+*/
+.contentWrapper {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.centerWrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.centerWrapper .contentBox{
+    background-color: #404040;
+    width: 450px;
+    
+    border-style: solid;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/*  Navigation bar 
+
+*/
+
+nav {
+    background-color: #404040;
+    margin-bottom: 10px;
+    box-shadow: 0px -10px 100px black;
+}
+
+nav ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    justify-content: flex-end;
+}
+
+nav li {
+    height: 35px;
+}
+
+nav a {
+    text-decoration: none;
+    height: 100%;
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    color: aliceblue;
+    transition: 0.2s;
+}
+
+nav li:first-child {
+    margin-right: auto;
+}
+
+nav a:hover{
+    background-color: black;
+}
+
+nav img {
+    transition: 1s;
+    width: 30px;
+    height: 70%;
+}
+
+nav img:hover {
+    width: 100px;
+}
+
+nav button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0px;
+    margin-left: 6px;
+    padding: 5px;
+    background-color: #404040;
+    color: aliceblue;
+    font-family: cursive;
+}
+
+
+
 p {
     color: black;
 }
@@ -17,37 +113,52 @@ button {
 
 #leaveRoomButton {
     position: absolute;
-        top: 10px;
-        right: 10px;
+    
+}
+
+button {
+    background-color: gray;
+}
+
+input { 
+    max-width: 190px;
+    background-color: white;
+    border-radius: .5rem;
+    transition: all 0.3s cubic-bezier(0.19, 1, 0.22, 1);
 }
 
 /* Lobby CSS */
 #inputContainer {
+    /* background-color: #404040; */
+    padding: 10px;
     position: relative;
+    width: 200px;
 }
 
-#inputContainer .roomDisplayBox{
-    width: 300px;
-    height: 200px;
+#inputContainer p {
+    color: aliceblue;
+}
+
+.roomDisplayBox{
+    width: 220px;
+    height: 145px;
     padding: 5px;
     
     background-color: darkgray;
-    border-color: black;
-    border-style: solid;
-    border-radius: 50px;
+    border-left: 4px solid;
+    border-top-right-radius: 10px;
+    border-bottom-right-radius: 10px;
     overflow-y: auto;
-    position: absolute;
-    left: 225px;
-    top: 10px;
     transition: 0.5s;
 
     display: flex;
     flex-direction: column;
-    align-items: center; 
+    align-items: center;
 }
 
 .roomDisplayBox p {
     display: block;
+    color: black;
     text-size-adjust: 20px;
     margin: 0;
 }
@@ -56,17 +167,12 @@ button {
     display: block;
 }
 
-#inputContainer .roomDisplayBox:hover{
+/* .roomDisplayBox:hover{
     transform: scale(1.05);
     background-color: maroon;
-}
+} */
 
-/* Flex Box for dice,  */
-.contentWrapper {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-}
+
 
 /* Gives margin to dice */
 .diceContainer {
@@ -76,7 +182,7 @@ button {
 .dice {
     color:black;
     border: 2px solid black;
-    background-color: white;
+    background-color: aliceblue;
     display: inline;
     padding: 10px;
     margin: 5px;

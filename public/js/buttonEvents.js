@@ -20,6 +20,10 @@ socket.on('message', message => {
     console.log(message);
 });
 
+document.addEventListener('DOMContentLoaded', () => {
+    socket.emit('refreshRooms');
+});
+
 // Change Cat Button 
 document.getElementById('changeCatButton').addEventListener('click', function() {
     console.log("button pressed");
@@ -62,6 +66,12 @@ confirmButton.addEventListener('click', function() {
 // Create Room button
 document.getElementById('createRoom').addEventListener('click', function() {
     const roomName = document.getElementById('roomInput').value;
+
+    // TODO: Add error message to inform user
+    if (roomName.length > 10) {
+        return;
+    }
+
     // Request to update room list on client side
     socket.emit('getRoomList');
     socket.once('currentRoomList', newRoomList => {
@@ -73,7 +83,9 @@ document.getElementById('createRoom').addEventListener('click', function() {
     });
 });
 
-document.getElementById('refreshRoomsButton').addEventListener('click', function() {
+
+const refreshRoomsButton = document.getElementById('refreshRoomsButton');
+refreshRoomsButton.addEventListener('click', function() {
     // Remove paragraphs not working.
     const roomDisplayBox = document.querySelector('.roomDisplayBox');
     const paragraphs = roomDisplayBox.querySelectorAll('p');
@@ -83,18 +95,19 @@ document.getElementById('refreshRoomsButton').addEventListener('click', function
     });
 
     socket.emit('refreshRooms');
-    socket.once('refreshRooms', rooms => {
-        // Checks if rooms exist.
-        if (rooms.length === 0) {
+});
+
+socket.on('refreshRooms', rooms => {
+    // Checks if rooms exist.
+    if (rooms.length === 0) {
+        const paragraph = document.createElement('p');
+        paragraph.textContent = "No rooms currently online";
+        roomDisplayBox.appendChild(paragraph);
+    } else {
+        for (let i = 0; i < rooms.length; i++) {
             const paragraph = document.createElement('p');
-            paragraph.textContent = "No rooms currently online";
+            paragraph.textContent = rooms[i].name + ": " + rooms[i].clients.length + " Online Users";
             roomDisplayBox.appendChild(paragraph);
-        } else {
-            for (let i = 0; i < rooms.length; i++) {
-                const paragraph = document.createElement('p');
-                paragraph.textContent = rooms[i].name + ": " + rooms[i].clients.length + " Online Users";
-                roomDisplayBox.appendChild(paragraph);
-            }
         }
-    });
+    }
 });
