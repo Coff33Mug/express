@@ -27,7 +27,7 @@ socket.on('connect', () => {
 window.addEventListener('load', () => {
     // Checks for if the user reloaded webpage
     const navigationType = performance.getEntriesByType("navigation")[0].type;
-    if (navigationType === 'reload') {
+    if (navigationType === 'reload' || navigationType === 'back_forward') {
         window.location.href = '/lobby.html';
     }
 });

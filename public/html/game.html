@@ -11,54 +11,72 @@
         <nav>
             <ul>
                 <li><button id="leaveRoomButton">Leave Room</button></li>
-                <li><a href="">rahhh2</a></li>
-                <li><a href="">rahhh3</a></li>
+                <li><a href="">About me</a></li>
+                <li><a href="https://github.com/Coff33Mug/express">Github</a></li>
                 <li><img id= "catImage" src= "../images/cat.gif"> </img></li>
             </ul>
         </nav>
-        <!-- To place dice next to cat image -->
-        <p id="clientCount">Current online users: </p>
-        <div id="turnDisplay">
-            <p id="turnDisplayParagraph"></p>
-        </div>
-        <div id="gameInformationVBox"></div>
-        <div class="contentWrapper">
-            <button class="keepDiceButton" id="keepDiceButton1">Keep</button>
-            <button class="keepDiceButton" id="keepDiceButton2">Keep</button>
-            <button class="keepDiceButton" id="keepDiceButton3">Keep</button>
-        </div>
 
-        <div class="contentWrapper">
-            <div class='diceContainer'>
-                <img class="diceImage" id="dice1" src="../images/defaultDice.png" alt="">
-                <img class="diceImage" id="dice2" src="../images/defaultDice.png" alt="">
-                <img class="diceImage" id="dice3" src="../images/defaultDice.png" alt="">
+        <div class="centerWrapper" id="gameContentWrapper">
+            <div id="gameContentBox">
+
+                <!-- gameElementWrapper adds white background to each element -->
+                <div class="gameElementWrapper">
+                    <div class="verticalWrapper">
+
+                        <p id="clientCount">Current online users: </p>
+                        <div id="turnDisplay">
+                            <p id="turnDisplayParagraph"></p>
+                        </div>
+                        <div id="gameInformationVBox"></div>
+
+                    </div>
+                </div>
+                
+                <!-- To place dice next to cat image -->
+                <div class="gameElementWrapper">
+                        <div class="contentWrapper">
+                            <button class="keepDiceButton" id="keepDiceButton1">Keep</button>
+                            <button class="keepDiceButton" id="keepDiceButton2">Keep</button>
+                            <button class="keepDiceButton" id="keepDiceButton3">Keep</button>
+                        </div>
+                
+                        <div class="contentWrapper">
+                            <div class='diceContainer'>
+                                <img class="diceImage" id="dice1" src="../images/defaultDice.png" alt="">
+                                <img class="diceImage" id="dice2" src="../images/defaultDice.png" alt="">
+                                <img class="diceImage" id="dice3" src="../images/defaultDice.png" alt="">
+                            </div>
+                        </div>
+                
+                        <div class="contentWrapper">
+                                <div class='diceContainer'>
+                                    <img class="diceImage" id="dice4" src="../images/defaultDice.png" alt="">
+                                    <img class="diceImage" id="dice5" src="../images/defaultDice.png" alt="">
+                                    <img class="diceImage" id="dice6" src="../images/defaultDice.png" alt="">
+                                </div>
+                        </div>
+                
+                        <div style="margin-top: -20px;" class="contentWrapper">
+                            <button class="keepDiceButton" id="keepDiceButton4">Keep</button>
+                            <button class="keepDiceButton" id="keepDiceButton5">Keep</button>
+                            <button class="keepDiceButton" id="keepDiceButton6">Keep</button>
+                        </div>
+                
+                        <div class="contentWrapper">
+                            <button id="rollDiceButton" type="button">Roll Dice</button>
+                            <button id="keepHandButton">Keep Hand</button>
+                            <button id="changeCatButton" type="button">Change Cat</button>
+                        </div>
+                </div>
+
             </div>
         </div>
-
-        <div class="contentWrapper">
-                <div class='diceContainer'>
-                    <img class="diceImage" id="dice4" src="../images/defaultDice.png" alt="">
-                    <img class="diceImage" id="dice5" src="../images/defaultDice.png" alt="">
-                    <img class="diceImage" id="dice6" src="../images/defaultDice.png" alt="">
-                </div>
-        </div>
-
-        <div style="margin-top: -20px;" class="contentWrapper">
-            <button class="keepDiceButton" id="keepDiceButton4">Keep</button>
-            <button class="keepDiceButton" id="keepDiceButton5">Keep</button>
-            <button class="keepDiceButton" id="keepDiceButton6">Keep</button>
-        </div>
-
-        <div class="contentWrapper">
-            <button id="rollDiceButton" type="button">Roll Dice</button>
-            <button id="keepHandButton">Keep Hand</button>
-            <button id="changeCatButton" type="button">Change Cat</button>
-        </div>
-
+        
+    
         <!-- Webscript initialization for main.js -->
         <script src="/socket.io/socket.io.js"></script>
         <script type="module"src="../js/socketManager.js"></script>
-        <script type="module" src="../js/main.js"></script>
+        <script type="module" src="../js/game.js"></script>
     </body>
     </html>

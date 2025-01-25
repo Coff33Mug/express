@@ -24,18 +24,6 @@ document.addEventListener('DOMContentLoaded', () => {
     socket.emit('refreshRooms');
 });
 
-// Change Cat Button 
-document.getElementById('changeCatButton').addEventListener('click', function() {
-    console.log("button pressed");
-    if (index < images.length - 1) {
-        document.getElementById('catImage').src = images[index]; 
-            index++;
-    } else {
-        document.getElementById('catImage').src = images[index];
-        index = 0;
-    }
-});
-
 // Confirm Button
 const confirmButton = document.getElementById('confirmButton');
 confirmButton.addEventListener('click', function() {

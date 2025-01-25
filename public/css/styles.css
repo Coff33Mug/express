@@ -19,6 +19,13 @@
     height: 100vh;
 }
 
+.verticalWrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    
+}
+
 .centerWrapper .contentBox{
     background-color: #404040;
     width: 450px;
@@ -28,6 +35,29 @@
     display: flex;
     justify-content: center;
     align-items: center;
+}
+
+/* Holds every element related to the game */
+#gameContentBox {
+    background-color: #404040;
+    width: auto;
+    height: 400px;
+    
+    border-style: solid;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Puts a box around the game information and dice */
+.gameElementWrapper {
+    background-color: white;
+    border-style: solid;
+    border-width: 4px;
+    padding: 7px;
+    margin: 10px;
+    border-radius: 10px;
 }
 
 /*  Navigation bar 
@@ -173,7 +203,7 @@ input {
 } */
 
 
-
+/* Game Page CSS */
 /* Gives margin to dice */
 .diceContainer {
     margin-bottom: 30px;
@@ -208,6 +238,7 @@ input {
     padding: 20px;
     margin-bottom: 10px;
     background-color: darkgray;
+    border-style: solid;
     border-radius: 10px;
 }
 
@@ -219,10 +250,12 @@ input {
 }
 
 #gameInformationVBox {
+    border: #404040 ;
+    border-style: solid;
     width: 300px;
     height: 200px;
     padding: 20px;
-    margin-bottom: 30px;
+    margin-bottom: 10px;
     background-color: darkgray;
     border-radius: 50px;
     overflow-y: auto;
