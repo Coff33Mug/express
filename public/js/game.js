@@ -75,7 +75,7 @@ alongside clientside game info
 socket.on('updateClientDice', ({room, result}) => {
     if (currentRoomName === room.name) {
         for (let i = 1; i <= 6; i++) {
-            document.getElementById(`dice${i}`).src = `../images/dice${result[i-1]}.png`
+            animateDice(result[i-1], i-1);
             document.getElementById(`dice${i}`).alt = result[i-1];
         }
         console.log("Got dice results and possible points");
@@ -122,7 +122,6 @@ document.getElementById('rollDiceButton').addEventListener('click', function () 
 });
 
 
-
 const specialEventButton = document.getElementById('specialEventButton');
 specialEventButton.addEventListener('click', function () {
     if (currentUsername !== currentPlayer) {
@@ -131,36 +130,60 @@ specialEventButton.addEventListener('click', function () {
 
     let randomNumber = Math.floor((Math.random() * 2));
     const Event = specialEvents[randomNumber];
+    currentEvent = Event;
     specialEventButton.disabled = true;
+    console.log(currentEvent);
     socket.emit('newSpecialEvent', {roomName: currentRoomName, Event});
 });
 
-socket.on('updateSpecalEvent', ({roomName, Event}) => {
-    if (roomName === currentRoomName) {
-        currentEvent = Event;
-        switch (Event) {
-            case "extraDice": {
-                document.getElementById('specialEventStrong').innerHTML = "Extra Dice!";
-                document.getElementById('extraDiceBox').style.display = "flex";
-                
-                // Roll Extra dice
-                let dice = Math.floor((Math.random() * 6) + 1);
-                document.getElementById('dice7').alt = dice;
-                
+/*  Below is the list of every possible special event and their responses.
+*/
 
-                animateDice(dice, 6);
-                break;
-            }
-
-            case "skipTurn": {
-                document.getElementById('specialEventStrong').innerHTML = "Skipped Turn";
-                break;
-            }
-        }
+socket.on('eventExtraDice', ({roomName, dice}) => {
+    if (roomName !== currentRoomName) {
+        return;
     }
+
+    // Changes Event title to tell user that they got extra dice, makes it visible, and 
+    // changes extra dice value.
+    document.getElementById('specialEventStrong').innerHTML = "Extra Dice!";
+    document.getElementById('extraDiceBox').style.display = "flex";
+    document.getElementById('dice7').alt = dice;
+    animateDice(dice, 6);
 });
 
-socket.on('enableSpecialEventButton', () => {
+
+socket.on('eventSkipTurn', ({roomName, player}) => {
+    if (roomName !== currentRoomName) {
+        return;
+    }
+
+    document.getElementById('specialEventStrong').innerHTML = "Lost your turn!";
+    currentPlayer = player;
+    specialEventButton.disabled = false;
+
+    turnInformation.textContent = `${player}'s turn`;
+});
+
+socket.on('resetSpecialEvent', ({roomName}) => {
+    if (roomName !== currentRoomName) {
+        return;
+    }
+
+    switch (currentEvent) {
+        case "extraDice": {
+            let extraDice = document.getElementById('dice7');
+            extraDice.alt = "";
+            document.getElementById('extraDiceBox').style.display = "none";
+            break;
+        }
+
+        default: {
+            break;
+        }
+    }
+
+    document.getElementById('specialEventStrong').innerHTML = "Special Event";
     specialEventButton.disabled = false;
 });
 
@@ -180,8 +203,6 @@ socket.on('canYouPlay', ({player}) => {
     if (currentUsername !== player) {
         return;
     }
-    
-
 
     let result = [];
     let keptDice = [];
@@ -232,7 +253,7 @@ socket.on('canYouPlay', ({player}) => {
         }
     }
 
-    console.log(result);
+    console.log(resultForPoints);
     
     socket.emit('rollDice', {
         username: currentUsername, 
@@ -263,26 +284,12 @@ function animateDice(dice, index) {
 
 // Event listener for keep hand, tells server to update user points.
 document.getElementById('keepHandButton').addEventListener('click', function () {
-    if (currentUsername !== currentPlayer) {
+    // If you aren't the player or it's your first turn, stop you from keeping hand
+    if ((currentUsername !== currentPlayer) || firstTurn === true) {
         return;
     }
 
-    switch (currentEvent) {
-        case "extraDice": {
-            let extraDice = document.getElementById('dice7');
-            extraDice.alt = "";
-            document.getElementById('extraDiceBox').style.display = "none";
-            break;
-        }
-
-        default: {
-
-            break;
-        }
-    }
-
-    document.getElementById('specialEventStrong').innerHTML = "Special Event";
-
+    firstTurn = true;
     socket.emit('keepHand', {username: currentUsername, roomName: currentRoomName});
 });
 

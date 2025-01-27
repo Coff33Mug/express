@@ -130,6 +130,9 @@ io.on('connection', socket => {
         io.emit('updateClientDice', ({room, result})); // Sent to game.js
     });
     
+    /*  When Keep hand is recieved, update point values for player
+        and update every user's event view
+    */
     socket.on('keepHand', ({username, roomName}) => {
         console.log(rooms);
         let room = rooms.find(r => r.name === roomName);
@@ -145,12 +148,36 @@ io.on('connection', socket => {
         room.turnNumber++;
         room.turnNumber = room.turnNumber % room.clients.length;
         socket.emit('enableKeepDiceButtons');
-        socket.emit('enableSpecialEventButton');
+        
+        io.emit('resetSpecialEvent', ({roomName}));
         io.emit('updateGameInformation', ({room})); // Sent to game.js
     });
 
     // Sends out the event type to all users of a room
     socket.on('newSpecialEvent', ({roomName, Event}) => {
+        switch (Event) {
+            case "extraDice": {
+                let dice = Math.floor((Math.random() * 6) + 1);
+                
+                io.emit('eventExtraDice', ({roomName, dice}));
+                break;
+            }
+
+            case "skipTurn": {
+                let room = rooms.find(r => r.name === roomName);
+
+                if (!room) {
+                    console.log("Room not found in newSpecialEvent");
+                }
+
+                room.turnNumber++;
+                room.turnNumber = room.turnNumber % room.clients.length;
+
+                io.emit('eventSkipTurn', ({roomName, player: room.clients[room.turnNumber]}));
+                break;
+            }
+        }
+
         io.emit('updateSpecalEvent', ({roomName, Event}));
     });
     
