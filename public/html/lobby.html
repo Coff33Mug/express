@@ -10,7 +10,7 @@
 <body>
     <nav>
         <ul>
-            <li><a href="">How To Play</a></li>
+            <li><a href="./instructions.html">How To Play</a></li>
             <li><a href="">About me</a></li>
             <li><a href="https://github.com/Coff33Mug/express">Github</a></li>
             <li><img id= "catImage" src="../images/cat.gif"> </img></li>
@@ -20,9 +20,9 @@
     <div class="centerWrapper">
         <div class="contentBox">
             <div id="inputContainer">
-                <p>Username</p>
+                <p for="Username">Username</p>
                 <input type="name" id="usernameInput">
-                <p>Room name</p>
+                <p for="roomName">Room name</p>
                 <input type="name" id="roomInput">
         
                 <div class="contentWrapper">
@@ -43,6 +43,6 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script type="module"src="../js/socketManager.js"></script>
-    <script type="module" src="../js/buttonEvents.js"></script>
+    <script type="module" src="../js/lobby.js"></script>
 </body>
 </html>
