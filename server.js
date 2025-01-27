@@ -53,9 +53,9 @@ io.on('connection', socket => {
     });
     
     /* // Game events
-    This request comes from main.js after a person joins a room through the 
+    This request comes from game.js after a person joins a room through the 
     confirm button. This sends information that is given through button events
-    to main.js to manage the room.
+    to game.js to manage the room.
     */
     socket.on('requestAllInformation', () => {
         const room = rooms.find(r => r.name === tempRoomName);
@@ -63,7 +63,7 @@ io.on('connection', socket => {
             const onlineUsers = room.clients.length;
             let player = room.clients[room.turnNumber];
             socket.emit('updatedInformation', ({room: room, username: tempUsername}));
-            io.emit('updateClientCount', ({roomName: tempRoomName, onlineUsers})); // Sent to main.js
+            io.emit('updateClientCount', ({roomName: tempRoomName, onlineUsers})); // Sent to game.js
         } else {
             // Still runs when the last person in the room leaves
             console.log("Room not found in requestAllInformation");
@@ -79,14 +79,14 @@ io.on('connection', socket => {
     });
     
     /*
-    This request comes from main.js after a person leaves. requestAllInformation... should
+    This request comes from game.js after a person leaves. requestAllInformation... should
     update the total amount of users online for the client when someone joins.
     */
     socket.on('updateRoomClientCount', ({roomName}) => {
         const room = rooms.find(r => r.name === roomName);
         if (room) {
             const onlineUsers = room.clients.length;
-            io.emit('updateClientCount', ({roomName, onlineUsers})); // Sent to main.js
+            io.emit('updateClientCount', ({roomName, onlineUsers})); // Sent to game.js
         } else {
             console.log("Room not found in updateRoomClientCount");
         }
@@ -95,7 +95,7 @@ io.on('connection', socket => {
     socket.on('updateGameInformation', ({roomName}) => {
         const room = rooms.find(r => r.name === roomName);
         if (room) {
-            io.emit('updateGameInformation', ({room})); // Sent to main.js
+            io.emit('updateGameInformation', ({room})); // Sent to game.js
         } else {
             console.log("Room not found in updateGameInformation");
         }
@@ -120,13 +120,14 @@ io.on('connection', socket => {
             room.turnNumber++;
             room.turnNumber = room.turnNumber % room.clients.length;
             room.possiblePoints[userIndex] = 0;
+            socket.emit('enableSpecialEventButton');
         }
         
-        // TODO: Issue with rerolling, kept dice not counting
+        // Sets points for player
         room.possiblePoints[userIndex] = points;
         room.possiblePoints[userIndex] += keptPoints;
         
-        io.emit('updateClientDice', ({room, result})); // Sent to main.js
+        io.emit('updateClientDice', ({room, result})); // Sent to game.js
     });
     
     socket.on('keepHand', ({username, roomName}) => {
@@ -140,11 +141,17 @@ io.on('connection', socket => {
         const userIndex = room.clients.indexOf(username);
         room.points[userIndex] += room.possiblePoints[userIndex];
         room.possiblePoints[userIndex] = 0;
-        // Updates turn
+        // Updates turn and re-enable buttons on player
         room.turnNumber++;
         room.turnNumber = room.turnNumber % room.clients.length;
         socket.emit('enableKeepDiceButtons');
-        io.emit('updateGameInformation', ({room})); // Sent to main.js
+        socket.emit('enableSpecialEventButton');
+        io.emit('updateGameInformation', ({room})); // Sent to game.js
+    });
+
+    // Sends out the event type to all users of a room
+    socket.on('newSpecialEvent', ({roomName, Event}) => {
+        io.emit('updateSpecalEvent', ({roomName, Event}));
     });
     
     function calculatePoints(result) {
@@ -192,31 +199,36 @@ io.on('connection', socket => {
                 frequencyOfNumber[i]--;
             }
         }
-        
-        /*
-        TODO: remember to add dice adding
+
+        /*  The reason why we check for ones first is because we assume you don't want to add
+            a one to a four dice for lower points.
         */
-        
-        // Adds any remaining points for 1s and 5s
+
         points += frequencyOfNumber[0] * 100;
+        frequencyOfNumber[0] = 0;
+    
+        // Dice adding
+        while (frequencyOfNumber[0] >= 1 && frequencyOfNumber[3] >= 1) {
+            points += 50;
+            frequencyOfNumber[0]--, frequencyOfNumber[3]--;
+        }
+
+        while(frequencyOfNumber[1] >= 1 && frequencyOfNumber[2] >= 1) {
+            points += 50;
+            frequencyOfNumber[1]--, frequencyOfNumber[2]--;
+        }
+        
+        // Adds any remaining points for 5s
         points += frequencyOfNumber[4] * 50;
         
         return points;
     }
     
-    function checkForBust(result) {
-        if (!result.includes(1) && !result.includes(5)) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-    
     // Room Events
     /*
-    This request comes from buttonEvents.js
+    This request comes from lobby.js
     Puts client connection into a room, for some reason, emits to anything in
-    main.js does not work. So any request for main.js must come from main.js
+    game.js does not work. So any request for game.js must come from game.js
     */
     socket.on('joinRoom', ({username, roomName}) => {
         // Checks for the existence of the room, the if statement
@@ -230,17 +242,17 @@ io.on('connection', socket => {
             tempRoomName = roomName;
             tempUsername = username;
             // console.log(tempRoomName + " " + tempUsername);  // working properly
-            socket.emit('redirectToPage', '/game.html'); // Sent to buttonEvents.js
+            socket.emit('redirectToPage', '/game.html'); // Sent to lobby.js
         }
     });
     
     // Sends room list to client
     socket.on('getRoomList', () => {
-        socket.emit('currentRoomList', rooms); // Sent to buttonEvents.js
+        socket.emit('currentRoomList', rooms); // Sent to lobby.js
     });
 
     socket.on('refreshRooms', () => {
-        socket.emit('refreshRooms', rooms); // Sent to buttonEvents.js
+        socket.emit('refreshRooms', rooms); // Sent to lobby.js
     });
     
     // Adds a room to the array of rooms
