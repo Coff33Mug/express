@@ -55,15 +55,17 @@ io.on('connection', socket => {
     /* // Game events
     This request comes from game.js after a person joins a room through the 
     confirm button. This sends information that is given through button events
-    to game.js to manage the room.
+    to game.js to manage the room. 
+
+    Recent changes makes the socket join the room. This allows for emit functionality.
     */
     socket.on('requestAllInformation', () => {
         const room = rooms.find(r => r.name === tempRoomName);
         if (room) {
             const onlineUsers = room.clients.length;
-            let player = room.clients[room.turnNumber];
+            socket.join(tempRoomName);
             socket.emit('updatedInformation', ({room: room, username: tempUsername}));
-            io.emit('updateClientCount', ({roomName: tempRoomName, onlineUsers})); // Sent to game.js
+            io.to(tempRoomName).emit('updateClientCount', ({onlineUsers})); // Sent to game.js
         } else {
             // Still runs when the last person in the room leaves
             console.log("Room not found in requestAllInformation");
@@ -86,7 +88,7 @@ io.on('connection', socket => {
         const room = rooms.find(r => r.name === roomName);
         if (room) {
             const onlineUsers = room.clients.length;
-            io.emit('updateClientCount', ({roomName, onlineUsers})); // Sent to game.js
+            io.to(roomName).emit('updateClientCount', ({onlineUsers})); // Sent to game.js
         } else {
             console.log("Room not found in updateRoomClientCount");
         }
@@ -95,7 +97,7 @@ io.on('connection', socket => {
     socket.on('updateGameInformation', ({roomName}) => {
         const room = rooms.find(r => r.name === roomName);
         if (room) {
-            io.emit('updateGameInformation', ({room})); // Sent to game.js
+            io.to(roomName).emit('updateGameInformation', ({room})); // Sent to game.js
         } else {
             console.log("Room not found in updateGameInformation");
         }
@@ -127,13 +129,13 @@ io.on('connection', socket => {
         room.possiblePoints[userIndex] = points;
         room.possiblePoints[userIndex] += keptPoints;
         
-        io.emit('updateClientDice', ({room, result})); // Sent to game.js
+        io.to(roomName).emit('updateClientDice', ({room, result})); // Sent to game.js
     });
     
     /*  When Keep hand is recieved, update point values for player
         and update every user's event view
     */
-    socket.on('keepHand', ({username, roomName}) => {
+    socket.on('keepHand', ({username, roomName, Event}) => {
         console.log(rooms);
         let room = rooms.find(r => r.name === roomName);
         if (!room) {
@@ -149,8 +151,8 @@ io.on('connection', socket => {
         room.turnNumber = room.turnNumber % room.clients.length;
         socket.emit('enableKeepDiceButtons');
         
-        io.emit('resetSpecialEvent', ({roomName}));
-        io.emit('updateGameInformation', ({room})); // Sent to game.js
+        io.to(roomName).emit('resetSpecialEvent', ({Event}));
+        io.to(roomName).emit('updateGameInformation', ({room})); // Sent to game.js
     });
 
     // Sends out the event type to all users of a room
@@ -159,7 +161,7 @@ io.on('connection', socket => {
             case "extraDice": {
                 let dice = Math.floor((Math.random() * 6) + 1);
                 
-                io.emit('eventExtraDice', ({roomName, dice}));
+                io.to(roomName).emit('eventExtraDice', ({dice}));
                 break;
             }
 
@@ -173,12 +175,10 @@ io.on('connection', socket => {
                 room.turnNumber++;
                 room.turnNumber = room.turnNumber % room.clients.length;
 
-                io.emit('eventSkipTurn', ({roomName, player: room.clients[room.turnNumber]}));
+                io.to(roomName).emit('eventSkipTurn', ({player: room.clients[room.turnNumber]}));
                 break;
             }
         }
-
-        io.emit('updateSpecalEvent', ({roomName, Event}));
     });
     
     function calculatePoints(result) {
@@ -265,10 +265,11 @@ io.on('connection', socket => {
             room.clients.push(username);
             room.points.push(0);
             room.possiblePoints.push(0);
-            socket.join(roomName)
+            // socket.join does nothing?
+            // socket.join("roomName");
+            console.log("Socket.join is def happening");
             tempRoomName = roomName;
             tempUsername = username;
-            // console.log(tempRoomName + " " + tempUsername);  // working properly
             socket.emit('redirectToPage', '/game.html'); // Sent to lobby.js
         }
     });
@@ -337,5 +338,6 @@ io.on('connection', socket => {
         }
     });
     
+
 });
 
