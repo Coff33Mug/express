@@ -196,7 +196,6 @@ input {
 .roomDisplayBox p {
     display: block;
     color: black;
-    text-size-adjust: 20px;
     margin: 0;
 }
 
@@ -243,8 +242,10 @@ input {
 }
 
 #turnDisplay {
-    position: relative;
-    width: 300px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 200px;
     height: 10px;
     padding: 20px;
     margin-bottom: 10px;
@@ -255,21 +256,24 @@ input {
 
 #turnDisplay p {
     margin: 0;
-    position: absolute;               
-    top: 50%;                         
-    transform: translate(0, -50%);  
+    font-size: 20px;
 }
 
 #gameInformationVBox {
     border: #404040 ;
     border-style: solid;
-    width: 300px;
+    width: 200px;
     height: 200px;
     padding: 20px;
     margin-bottom: 10px;
     background-color: darkgray;
     border-radius: 50px;
     overflow-y: auto;
+}
+
+#gameInformationVBox p {
+    margin-left: 5px;
+    font-size: 20px;
 }
 
 #clientCount {

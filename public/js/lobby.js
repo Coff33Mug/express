@@ -44,6 +44,7 @@ confirmButton.addEventListener('click', function() {
         // Checks if room exist
         if (roomName != "" && room && !(room.clients.includes(username))) {
             socket.emit('joinRoom', {username: username, roomName: roomName});
+            socket.emit('debugJoinRoom', ({roomName: roomName}));
         } else {
             console.log("Room does not exist or username in use");
         }
@@ -99,3 +100,4 @@ socket.on('refreshRooms', rooms => {
         }
     }
 });
+
