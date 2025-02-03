@@ -6,7 +6,7 @@ const clientCountParagraph = document.getElementById('clientCount');
 const gameInformationVBox = document.getElementById('gameInformationVBox');
 const turnInformation = document.getElementById('turnDisplayParagraph');
 const keepDiceArray = new Array(6).fill(false);
-const specialEvents = ["extraDice", "skipTurn"];
+const specialEvents = ["extraDice", "skipTurn", ">=500"];
 let previouslyKeptDice = new Array(6).fill(false);
 let currentRoom;
 let currentRoomName;
@@ -69,9 +69,11 @@ socket.on('updateClientCount', ({onlineUsers}) => {
 alongside clientside game info
 */
 socket.on('updateClientDice', ({room, result}) => {
-    for (let i = 1; i <= 6; i++) {
-        animateDice(result[i-1], i-1);
-        document.getElementById(`dice${i}`).alt = result[i-1];
+    for (let i = 0; i <= 5; i++) {
+        if (keepDiceArray[i] === false) {
+            animateDice(result[i], i);
+            document.getElementById(`dice${i}`).alt = result[i];
+        }
     }
     console.log("Got dice results and possible points");
     updateAllGameInformation(room);
@@ -122,7 +124,7 @@ specialEventButton.addEventListener('click', function () {
         return;
     }
 
-    let randomNumber = Math.floor((Math.random() * 2));
+    let randomNumber = Math.floor((Math.random() * 3));
     const Event = specialEvents[randomNumber];
     currentEvent = Event;
     specialEventButton.disabled = true;
@@ -146,8 +148,14 @@ socket.on('eventExtraDice', ({dice}) => {
 socket.on('eventSkipTurn', ({player}) => {
     document.getElementById('specialEventStrong').innerHTML = "Lost your turn!";
     currentPlayer = player;
+    resetDice();
+    resetExtraDice();
     specialEventButton.disabled = false;
     turnInformation.textContent = `${player}'s turn`;
+});
+
+socket.on('event>=500', () => {
+    document.getElementById('specialEventStrong').innerHTML = "Fill with over 500 for 500+ points!";
 });
 
 
@@ -242,7 +250,8 @@ socket.on('canYouPlay', ({player}) => {
     
     socket.emit('rollDice', {
         username: currentUsername, 
-        roomName: currentRoomName, 
+        roomName: currentRoomName,
+        event: currentEvent, 
         result, 
         keptDice,
         resultForPoints});
@@ -274,6 +283,12 @@ function resetDice() {
     }
 }
 
+function resetExtraDice() {
+    let extraDice = document.getElementById('dice7');
+    extraDice.alt = "";
+    document.getElementById('extraDiceBox').style.display = "none";
+}
+
 // Event listener for keep hand, tells server to update user points.
 document.getElementById('keepHandButton').addEventListener('click', function () {
     // If you aren't the player or it's your first turn, stop you from keeping hand
@@ -282,9 +297,21 @@ document.getElementById('keepHandButton').addEventListener('click', function () 
     }
 
     firstTurn = true;
+    let result = [];
+
+    for (let i = 0; i <= 5; i++) {
+        result[i] = document.getElementById(`dice${i+1}`).alt;
+    }
+    
+    if (currentEvent === "extraDice") {
+        result[6] = document.getElementById('dice7').alt;
+    }
+
+    console.log(result);
     socket.emit('keepHand', {
         username: currentUsername, 
         roomName: currentRoomName, 
+        result,
         Event:currentEvent});
 });
 

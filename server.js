@@ -56,7 +56,7 @@ io.on('connection', socket => {
     This request comes from game.js after a person joins a room through the 
     confirm button. This sends information that is given through button events
     to game.js to manage the room. 
-
+    
     Recent changes makes the socket join the room. This allows for emit functionality.
     */
     socket.on('requestAllInformation', () => {
@@ -103,19 +103,34 @@ io.on('connection', socket => {
         }
     });
     
-    // Emits results to all online clients
-    socket.on('rollDice', ({username, roomName, result, keptDice, resultForPoints}) => {
+    /*  Takes in all the rolled dice, split into three different arrays:
+    Result: The 6 dice emitted to all clients
+    keptDice: Dice kept by the client
+    
+    */
+    socket.on('rollDice', ({username, roomName, event, result, keptDice, resultForPoints}) => {
         console.log(result);
-        console.log(rooms);
         let room = rooms.find(r => r.name === roomName);
         
         if (!room) {
             console.log("Room not found in rollDice");
         }
+        let points;
+        let keptPoints;
         
+        switch (event) {
+            case ">=500": {
+                points = calculatePointsEventBased(resultForPoints).points;
+                keptPoints = calculatePointsEventBased(keptDice).points;
+            }
+
+            default: {
+                points = calculatePoints(resultForPoints).points;
+                keptPoints = calculatePoints(keptDice).points;
+            }
+        }
+
         const userIndex = room.clients.indexOf(username);
-        let points = calculatePoints(resultForPoints);
-        let keptPoints = calculatePoints(keptDice);
         
         // Give up your turn if you bust
         if (points === 0) {
@@ -123,6 +138,7 @@ io.on('connection', socket => {
             room.turnNumber = room.turnNumber % room.clients.length;
             room.possiblePoints[userIndex] = 0;
             socket.emit('enableSpecialEventButton');
+            socket.emit('enableKeepDiceButtons');
         }
         
         // Sets points for player
@@ -133,19 +149,40 @@ io.on('connection', socket => {
     });
     
     /*  When Keep hand is recieved, update point values for player
-        and update every user's event view
+    and update every user's event view
     */
-    socket.on('keepHand', ({username, roomName, Event}) => {
-        console.log(rooms);
+    socket.on('keepHand', ({username, roomName, result, Event}) => {
         let room = rooms.find(r => r.name === roomName);
         if (!room) {
             console.log("Room not found in keepHand");
         }
-        
-        // Sets points for the player
+
         const userIndex = room.clients.indexOf(username);
-        room.points[userIndex] += room.possiblePoints[userIndex];
-        room.possiblePoints[userIndex] = 0;
+        switch (Event) {
+            case ">=500": {
+                const handFilled = calculatePointsEventBased(result).handFilled;
+                if (handFilled === true && room.possiblePoints[userIndex] >= 500) {
+                    // Sets points for the player and gives 500 bonus points
+                    room.points[userIndex] += room.possiblePoints[userIndex];
+                    room.points[userIndex] += 500;
+                    room.possiblePoints[userIndex] = 0;
+                    
+                } else {
+                    // Sets points for the player normally given you didn't fill your hand
+                    room.points[userIndex] += room.possiblePoints[userIndex];
+                    room.possiblePoints[userIndex] = 0;
+                    console.log("Bonus points not given");
+                }
+                break;
+            }
+
+            default: {
+                // Sets points for the player
+                room.points[userIndex] += room.possiblePoints[userIndex];
+                room.possiblePoints[userIndex] = 0;
+            }
+        }
+        
         // Updates turn and re-enable buttons on player
         room.turnNumber++;
         room.turnNumber = room.turnNumber % room.clients.length;
@@ -154,7 +191,7 @@ io.on('connection', socket => {
         io.to(roomName).emit('resetSpecialEvent', ({Event}));
         io.to(roomName).emit('updateGameInformation', ({room})); // Sent to game.js
     });
-
+    
     // Sends out the event type to all users of a room
     socket.on('newSpecialEvent', ({roomName, Event}) => {
         switch (Event) {
@@ -164,32 +201,39 @@ io.on('connection', socket => {
                 io.to(roomName).emit('eventExtraDice', ({dice}));
                 break;
             }
-
+            
             case "skipTurn": {
                 let room = rooms.find(r => r.name === roomName);
-
+                
                 if (!room) {
                     console.log("Room not found in newSpecialEvent");
                 }
-
+                
                 room.turnNumber++;
                 room.turnNumber = room.turnNumber % room.clients.length;
-
+                
                 io.to(roomName).emit('eventSkipTurn', ({player: room.clients[room.turnNumber]}));
+                break;
+            }
+
+            case ">=500": {
+                io.to(roomName).emit('event>=500');
                 break;
             }
         }
     });
     
+    // This doesn't seem optimized
     function calculatePoints(result) {
         let points = 0
+        let handFilled = true;
         
         // Creates an array of the amount of times a roll appears
         const frequencyOfNumber = new Array(6).fill(0);
         for (let i = 0; i < result.length; i++) {
             frequencyOfNumber[result[i]-1]++;
         }
-
+        
         // Checks for instance of 6 of a kind
         for (let i = 0; i < 6; i++) {
             if (frequencyOfNumber[i] === 6) {
@@ -197,13 +241,13 @@ io.on('connection', socket => {
                 if (i === 0) {
                     points += 5000;
                 } else {
-                // If you got six x's, you get x * 500 points!
+                    // If you got six x's, you get x * 500 points!
                     points += (i+1) * 500;
                 }
                 frequencyOfNumber[i] -= 6;
             }
         }
-
+        
         // Checks for instances of triplet dice roll
         for (let i = 0; i < 6; i++) {
             if (frequencyOfNumber[i] >= 3) {
@@ -211,7 +255,7 @@ io.on('connection', socket => {
                 if (i === 0) {
                     points += 1000;
                 } else {
-                // If you got triple x's, you get x * 100 points!
+                    // If you got triple x's, you get x * 100 points!
                     points += (i+1) * 100;
                 }
                 frequencyOfNumber[i] -= 3;
@@ -226,20 +270,20 @@ io.on('connection', socket => {
                 frequencyOfNumber[i]--;
             }
         }
-
+        
         /*  The reason why we check for ones first is because we assume you don't want to add
-            a one to a four dice for lower points.
+        a one to a four dice for lower points.
         */
-
+        
         points += frequencyOfNumber[0] * 100;
         frequencyOfNumber[0] = 0;
-    
+        
         // Dice adding
         while (frequencyOfNumber[0] >= 1 && frequencyOfNumber[3] >= 1) {
             points += 50;
             frequencyOfNumber[0]--, frequencyOfNumber[3]--;
         }
-
+        
         while(frequencyOfNumber[1] >= 1 && frequencyOfNumber[2] >= 1) {
             points += 50;
             frequencyOfNumber[1]--, frequencyOfNumber[2]--;
@@ -248,7 +292,114 @@ io.on('connection', socket => {
         // Adds any remaining points for 5s
         points += frequencyOfNumber[4] * 50;
         
-        return points;
+        /*  If there are any remaining dice that weren't used towards point calculations,
+        their hand was not filled. TODO: not working properly
+        Issue with how points are calculated, 
+        given we roll a 4 and a 1, 1 dice is eaten up in priority of 100 points over filling hand.
+        */
+
+        for (let i = 0; i < frequencyOfNumber.length; i++) {
+            if (frequencyOfNumber[i] !== 0) {
+                handFilled = false;
+            }
+        }
+        
+        const calculatedPoints = {
+            points: points,
+            handFilled: handFilled
+        }
+        
+        return calculatedPoints;
+    }
+    
+    /*  Calculates points with priority to adding based on event
+        Ex. >=500 will always add dice in the case you get a 4 and a 1 where normally they would not 
+        add as usually a player will take 100 over 50 points. In the case of an event where the player
+        wants to fill, this function is used.
+    */
+    function calculatePointsEventBased(result) {
+        let points = 0
+        let handFilled = true;
+        
+        // Creates an array of the amount of times a roll appears
+        const frequencyOfNumber = new Array(6).fill(0);
+        for (let i = 0; i < result.length; i++) {
+            frequencyOfNumber[result[i]-1]++;
+        }
+        
+        // Checks for instance of 6 of a kind
+        for (let i = 0; i < 6; i++) {
+            if (frequencyOfNumber[i] === 6) {
+                // If you get six 1's, 5000 points!
+                if (i === 0) {
+                    points += 5000;
+                } else {
+                    // If you got six x's, you get x * 500 points!
+                    points += (i+1) * 500;
+                }
+                frequencyOfNumber[i] -= 6;
+            }
+        }
+        
+        // Checks for instances of triplet dice roll
+        for (let i = 0; i < 6; i++) {
+            if (frequencyOfNumber[i] >= 3) {
+                // If you got triple ones, 1000 points!
+                if (i === 0) {
+                    points += 1000;
+                } else {
+                    // If you got triple x's, you get x * 100 points!
+                    points += (i+1) * 100;
+                }
+                frequencyOfNumber[i] -= 3;
+            }
+        }
+        
+        // Checks for a straight
+        if (frequencyOfNumber.every(num => num === 1)) {
+            points += 1500;
+            
+            for (let i = 0; i < 6; i++) {
+                frequencyOfNumber[i]--;
+            }
+        }
+        
+        // Dice adding is priority given you need to fill your hand
+        while (frequencyOfNumber[0] >= 1 && frequencyOfNumber[3] >= 1) {
+            points += 50;
+            frequencyOfNumber[0]--, frequencyOfNumber[3]--;
+        }
+        
+        while(frequencyOfNumber[1] >= 1 && frequencyOfNumber[2] >= 1) {
+            points += 50;
+            frequencyOfNumber[1]--, frequencyOfNumber[2]--;
+        }
+
+        // Add any remaining points for 1s
+        points += frequencyOfNumber[0] * 100;
+        frequencyOfNumber[0] = 0;
+        // Adds any remaining points for 5s
+        points += frequencyOfNumber[4] * 50;
+        frequencyOfNumber[4] = 0;
+        
+        /*  If there are any remaining dice that weren't used towards point calculations,
+        their hand was not filled. TODO: not working properly
+        Issue with how points are calculated, 
+        given we roll a 4 and a 1, 1 dice is eaten up in priority of 100 points over filling hand.
+        */
+        
+        for (let i = 0; i < frequencyOfNumber.length; i++) {
+            if (frequencyOfNumber[i] !== 0) {
+                handFilled = false;
+            }
+        }
+        
+        const calculatedPoints = {
+            points: points,
+            handFilled: handFilled
+        }
+        
+        return calculatedPoints;
     }
     
     // Room Events
@@ -265,9 +416,6 @@ io.on('connection', socket => {
             room.clients.push(username);
             room.points.push(0);
             room.possiblePoints.push(0);
-            // socket.join does nothing?
-            // socket.join("roomName");
-            console.log("Socket.join is def happening");
             tempRoomName = roomName;
             tempUsername = username;
             socket.emit('redirectToPage', '/game.html'); // Sent to lobby.js
@@ -278,7 +426,7 @@ io.on('connection', socket => {
     socket.on('getRoomList', () => {
         socket.emit('currentRoomList', rooms); // Sent to lobby.js
     });
-
+    
     socket.on('refreshRooms', () => {
         socket.emit('refreshRooms', rooms); // Sent to lobby.js
     });
@@ -338,6 +486,6 @@ io.on('connection', socket => {
         }
     });
     
-
+    
 });
 
