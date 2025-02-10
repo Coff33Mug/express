@@ -72,7 +72,7 @@ socket.on('updateClientDice', ({room, result}) => {
     for (let i = 0; i <= 5; i++) {
         if (keepDiceArray[i] === false) {
             animateDice(result[i], i);
-            document.getElementById(`dice${i}`).alt = result[i];
+            document.getElementById(`dice${i+1}`).alt = result[i];
         }
     }
     console.log("Got dice results and possible points");
@@ -97,7 +97,6 @@ const images = [
 ];
 
 document.getElementById('changeCatButton').addEventListener('click', function() {
-    console.log("button pressed");
     if (index < images.length - 1) {
         document.getElementById('catImage').src = images[index]; 
         index++;

@@ -35,6 +35,10 @@ app.get('/lobby.html', function(req, res, next) {
     res.sendFile(path.join(__dirname, 'public', 'html/lobby.html'));
 });
 
+app.get('/localGame.html', function(req, res, next) {
+    res.sendFile(path.join(__dirname, 'public', 'html/localGame.html'));
+});
+
 // Server's connection to port
 server.listen(port, () => {
     console.log(`Connection for port ${port} successful`);
@@ -137,7 +141,6 @@ io.on('connection', socket => {
             room.turnNumber++;
             room.turnNumber = room.turnNumber % room.clients.length;
             room.possiblePoints[userIndex] = 0;
-            socket.emit('enableSpecialEventButton');
             socket.emit('enableKeepDiceButtons');
         }
         
