@@ -6,8 +6,7 @@ const clientCountParagraph = document.getElementById('clientCount');
 const gameInformationVBox = document.getElementById('gameInformationVBox');
 const turnInformation = document.getElementById('turnDisplayParagraph');
 const keepDiceArray = new Array(6).fill(false);
-const specialEvents = ["extraDice", "skipTurn", ">=500"];
-let previouslyKeptDice = new Array(6).fill(false);
+const specialEvents = ["extraDice", "skipTurn", ">=500", "retribution"];
 let currentRoom;
 let currentRoomName;
 let currentUsername;
@@ -123,7 +122,7 @@ specialEventButton.addEventListener('click', function () {
         return;
     }
 
-    let randomNumber = Math.floor((Math.random() * 3));
+    let randomNumber = Math.floor((Math.random() * 4));
     const Event = specialEvents[randomNumber];
     currentEvent = Event;
     specialEventButton.disabled = true;
@@ -143,7 +142,6 @@ socket.on('eventExtraDice', ({dice}) => {
     animateDice(dice, 6);
 });
 
-
 socket.on('eventSkipTurn', ({player}) => {
     document.getElementById('specialEventStrong').innerHTML = "Lost your turn!";
     currentPlayer = player;
@@ -157,10 +155,14 @@ socket.on('event>=500', () => {
     document.getElementById('specialEventStrong').innerHTML = "Fill with over 500 for 500+ points!";
 });
 
+socket.on('eventRetribution', () => {
+    document.getElementById('specialEventStrong').innerHTML = "Retribution!";
+});
+
 
 /*  On top of resetting everything special event related, now resets the dice.
 */
-socket.on('resetSpecialEvent', ({Event}) => {
+socket.on('resetSpecialEvent', (Event) => {
     switch (Event) {
         case "extraDice": {
             let extraDice = document.getElementById('dice7');
@@ -176,6 +178,14 @@ socket.on('resetSpecialEvent', ({Event}) => {
 
     document.getElementById('specialEventStrong').innerHTML = "Special Event";
     resetDice();
+    currentEvent = undefined;
+    specialEventButton.disabled = false;
+});
+
+socket.on('resetSpecialEventGeneral' ,() => {
+    document.getElementById('specialEventStrong').innerHTML = "Special Event";
+    resetDice();
+    currentEvent = undefined;
     specialEventButton.disabled = false;
 });
 

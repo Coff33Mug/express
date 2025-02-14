@@ -142,6 +142,7 @@ io.on('connection', socket => {
             room.turnNumber = room.turnNumber % room.clients.length;
             room.possiblePoints[userIndex] = 0;
             socket.emit('enableKeepDiceButtons');
+            io.to(roomName).emit('resetSpecialEventGeneral');
         }
         
         // Sets points for player
@@ -179,6 +180,50 @@ io.on('connection', socket => {
                 break;
             }
 
+            case "retribution": {
+                // Sets points for the player
+                room.points[userIndex] += room.possiblePoints[userIndex];
+                room.possiblePoints[userIndex] = 0;
+
+                const handFilled = calculatePointsEventBased(result).handFilled;
+                // Nothing happens if hand isn't filled.
+                if (handFilled !== true) {
+                    break;
+                }
+                
+                let largest = 0;
+                let retributionUserIndex;
+                let users = [];
+                /*  Goes through every player to find who has the most points.
+                    Given the case that multiple players have the same amount of points,
+                    they are added to the users array. All players that have the same amount of points
+                    lose 3000 points.
+                */  
+                for (let i = 0; i < room.clients.length; i++) {
+                    if (room.points[i] === 0) {
+                        continue;
+                    }
+
+                    if (room.points[i] > largest && username !== room.clients[i]) {
+                        largest = room.points[i];
+                        retributionUserIndex = i;
+                        users[0] = i;
+                    } else if (room.points[i] === largest && username !== room.clients[i]) {
+                        users.push(i);
+                    }
+                }
+
+                if (users.length === 1) {
+                    room.points[retributionUserIndex] -= 3000;
+                } else {
+                    for (let i = 0; i < users.length; i++) {
+                        room.points[users[i]] -= 3000;
+                    }
+                }
+
+                break;
+            }
+
             default: {
                 // Sets points for the player
                 room.points[userIndex] += room.possiblePoints[userIndex];
@@ -191,7 +236,7 @@ io.on('connection', socket => {
         room.turnNumber = room.turnNumber % room.clients.length;
         socket.emit('enableKeepDiceButtons');
         
-        io.to(roomName).emit('resetSpecialEvent', ({Event}));
+        io.to(roomName).emit('resetSpecialEvent', (Event));
         io.to(roomName).emit('updateGameInformation', ({room})); // Sent to game.js
     });
     
@@ -221,6 +266,11 @@ io.on('connection', socket => {
 
             case ">=500": {
                 io.to(roomName).emit('event>=500');
+                break;
+            }
+
+            case "retribution": {
+                io.to(roomName).emit('eventRetribution');
                 break;
             }
         }
