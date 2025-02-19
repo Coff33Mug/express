@@ -321,13 +321,20 @@ input {
     padding: 20px;
     margin-bottom: 10px;
     background-color: darkgray;
-    border-radius: 50px;
+    border-radius: 0px;
     overflow-y: auto;
 }
 
 #gameInformationVBox p {
+    height: 25px;
     margin-left: 5px;
+    margin-bottom: 10px;
     font-size: 20px;
+    border: #404040 ;
+    border-style: solid;
+    border-radius: 10px;
+    padding-left: 10px;
+    background-color: white;
 }
 
 #clientCount {
