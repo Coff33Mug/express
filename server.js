@@ -35,6 +35,10 @@ app.get('/lobby.html', function(req, res, next) {
     res.sendFile(path.join(__dirname, 'public', 'html/lobby.html'));
 });
 
+app.get('/localGame.html', function(req, res, next) {
+    res.sendFile(path.join(__dirname, 'public', 'html/localGame.html'));
+});
+
 // Server's connection to port
 server.listen(port, () => {
     console.log(`Connection for port ${port} successful`);
@@ -115,11 +119,17 @@ io.on('connection', socket => {
         if (!room) {
             console.log("Room not found in rollDice");
         }
+
         let points;
         let keptPoints;
         
         switch (event) {
             case ">=500": {
+                points = calculatePointsEventBased(resultForPoints).points;
+                keptPoints = calculatePointsEventBased(keptDice).points;
+            }
+
+            case "allOrNothing": {
                 points = calculatePointsEventBased(resultForPoints).points;
                 keptPoints = calculatePointsEventBased(keptDice).points;
             }
@@ -137,8 +147,8 @@ io.on('connection', socket => {
             room.turnNumber++;
             room.turnNumber = room.turnNumber % room.clients.length;
             room.possiblePoints[userIndex] = 0;
-            socket.emit('enableSpecialEventButton');
             socket.emit('enableKeepDiceButtons');
+            io.to(roomName).emit('resetSpecialEventGeneral');
         }
         
         // Sets points for player
@@ -173,6 +183,72 @@ io.on('connection', socket => {
                     room.possiblePoints[userIndex] = 0;
                     console.log("Bonus points not given");
                 }
+
+                // Updates turn and re-enable buttons on player
+                room.turnNumber++;
+                room.turnNumber = room.turnNumber % room.clients.length;
+                io.to(roomName).emit('resetSpecialEvent', (Event));
+                break;
+            }
+
+            case "retribution": {
+                // Gives player their points before checking if they filled their hand.
+                room.points[userIndex] += room.possiblePoints[userIndex];
+                room.possiblePoints[userIndex] = 0;
+
+                const handFilled = calculatePointsEventBased(result).handFilled;
+                // Nothing happens if hand isn't filled.
+                if (handFilled !== true) {
+                    break;
+                }
+                
+                let largest = 0;
+                let retributionUserIndex;
+                let users = [];
+                /*  Goes through every player to find who has the most points.
+                    Given the case that multiple players have the same amount of points,
+                    they are added to the users array. All players that have the same amount of points
+                    lose 3000 points.
+                */  
+                for (let i = 0; i < room.clients.length; i++) {
+                    if (room.points[i] === 0) {
+                        continue;
+                    }
+
+                    if (room.points[i] > largest && username !== room.clients[i]) {
+                        largest = room.points[i];
+                        retributionUserIndex = i;
+                        users[0] = i;
+                    } else if (room.points[i] === largest && username !== room.clients[i]) {
+                        users.push(i);
+                    }
+                }
+
+                if (users.length === 1) {
+                    room.points[retributionUserIndex] -= 3000;
+                } else {
+                    for (let i = 0; i < users.length; i++) {
+                        room.points[users[i]] -= 3000;
+                    }
+                }
+
+                // Updates turn and re-enable buttons on player
+                room.turnNumber++;
+                room.turnNumber = room.turnNumber % room.clients.length;
+                io.to(roomName).emit('resetSpecialEvent', (Event));
+                break;
+            }
+
+            case "allOrNothing": {
+                const handFilled = calculatePointsEventBased(result).handFilled;
+
+                // If their hand is not filled, they don't get points.
+                if (handFilled !== true) {
+                    break;
+                }
+
+                room.points[userIndex] += room.possiblePoints[userIndex];
+                room.possiblePoints[userIndex] = 0;
                 break;
             }
 
@@ -180,15 +256,18 @@ io.on('connection', socket => {
                 // Sets points for the player
                 room.points[userIndex] += room.possiblePoints[userIndex];
                 room.possiblePoints[userIndex] = 0;
+
+                // Updates turn and re-enable buttons on player
+                room.turnNumber++;
+                room.turnNumber = room.turnNumber % room.clients.length;
+                io.to(roomName).emit('resetSpecialEventGeneral');
             }
         }
         
-        // Updates turn and re-enable buttons on player
-        room.turnNumber++;
-        room.turnNumber = room.turnNumber % room.clients.length;
+        // // Updates turn and re-enable buttons on player
+        // room.turnNumber++;
+        // room.turnNumber = room.turnNumber % room.clients.length;
         socket.emit('enableKeepDiceButtons');
-        
-        io.to(roomName).emit('resetSpecialEvent', ({Event}));
         io.to(roomName).emit('updateGameInformation', ({room})); // Sent to game.js
     });
     
@@ -218,6 +297,16 @@ io.on('connection', socket => {
 
             case ">=500": {
                 io.to(roomName).emit('event>=500');
+                break;
+            }
+
+            case "retribution": {
+                io.to(roomName).emit('eventRetribution');
+                break;
+            }
+
+            case "allOrNothing": {
+                io.to(roomName).emit('eventAllOrNothing');
                 break;
             }
         }
@@ -340,6 +429,23 @@ io.on('connection', socket => {
                 frequencyOfNumber[i] -= 6;
             }
         }
+
+        /*  Dice adding is priority given you need to fill your hand
+            Dice adding has high priority because it prevents the event where
+            the hand is filled in All Or Nothing but triple dice roll take away the
+            dice that is being added.
+            EX: [ 1, 4, 1, 2, 1, 3 ] where triple 1s are eaten
+            and 4 has nothing to add to but locking keep button code thinks it's a fill 
+        */  
+        while (frequencyOfNumber[0] >= 1 && frequencyOfNumber[3] >= 1) {
+            points += 50;
+            frequencyOfNumber[0]--, frequencyOfNumber[3]--;
+        }
+        
+        while(frequencyOfNumber[1] >= 1 && frequencyOfNumber[2] >= 1) {
+            points += 50;
+            frequencyOfNumber[1]--, frequencyOfNumber[2]--;
+        }
         
         // Checks for instances of triplet dice roll
         for (let i = 0; i < 6; i++) {
@@ -362,17 +468,6 @@ io.on('connection', socket => {
             for (let i = 0; i < 6; i++) {
                 frequencyOfNumber[i]--;
             }
-        }
-        
-        // Dice adding is priority given you need to fill your hand
-        while (frequencyOfNumber[0] >= 1 && frequencyOfNumber[3] >= 1) {
-            points += 50;
-            frequencyOfNumber[0]--, frequencyOfNumber[3]--;
-        }
-        
-        while(frequencyOfNumber[1] >= 1 && frequencyOfNumber[2] >= 1) {
-            points += 50;
-            frequencyOfNumber[1]--, frequencyOfNumber[2]--;
         }
 
         // Add any remaining points for 1s

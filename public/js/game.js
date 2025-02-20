@@ -6,8 +6,7 @@ const clientCountParagraph = document.getElementById('clientCount');
 const gameInformationVBox = document.getElementById('gameInformationVBox');
 const turnInformation = document.getElementById('turnDisplayParagraph');
 const keepDiceArray = new Array(6).fill(false);
-const specialEvents = ["extraDice", "skipTurn", ">=500"];
-let previouslyKeptDice = new Array(6).fill(false);
+const specialEvents = ["extraDice", "skipTurn", ">=500", "retribution", "allOrNothing"];
 let currentRoom;
 let currentRoomName;
 let currentUsername;
@@ -72,10 +71,9 @@ socket.on('updateClientDice', ({room, result}) => {
     for (let i = 0; i <= 5; i++) {
         if (keepDiceArray[i] === false) {
             animateDice(result[i], i);
-            document.getElementById(`dice${i}`).alt = result[i];
+            document.getElementById(`dice${i+1}`).alt = result[i];
         }
     }
-    console.log("Got dice results and possible points");
     updateAllGameInformation(room);
 });
 
@@ -97,7 +95,6 @@ const images = [
 ];
 
 document.getElementById('changeCatButton').addEventListener('click', function() {
-    console.log("button pressed");
     if (index < images.length - 1) {
         document.getElementById('catImage').src = images[index]; 
         index++;
@@ -124,11 +121,11 @@ specialEventButton.addEventListener('click', function () {
         return;
     }
 
-    let randomNumber = Math.floor((Math.random() * 3));
+    // let randomNumber = Math.floor((Math.random() * 5));
+    let randomNumber = 4;
     const Event = specialEvents[randomNumber];
     currentEvent = Event;
     specialEventButton.disabled = true;
-    console.log(currentEvent);
     socket.emit('newSpecialEvent', {roomName: currentRoomName, Event});
 });
 
@@ -144,7 +141,6 @@ socket.on('eventExtraDice', ({dice}) => {
     animateDice(dice, 6);
 });
 
-
 socket.on('eventSkipTurn', ({player}) => {
     document.getElementById('specialEventStrong').innerHTML = "Lost your turn!";
     currentPlayer = player;
@@ -158,10 +154,18 @@ socket.on('event>=500', () => {
     document.getElementById('specialEventStrong').innerHTML = "Fill with over 500 for 500+ points!";
 });
 
+socket.on('eventRetribution', () => {
+    document.getElementById('specialEventStrong').innerHTML = "Retribution!";
+});
+
+socket.on('eventAllOrNothing', () => {
+    document.getElementById('specialEventStrong').innerHTML = "All or Nothing!";
+});
+
 
 /*  On top of resetting everything special event related, now resets the dice.
 */
-socket.on('resetSpecialEvent', ({Event}) => {
+socket.on('resetSpecialEvent', (Event) => {
     switch (Event) {
         case "extraDice": {
             let extraDice = document.getElementById('dice7');
@@ -177,6 +181,14 @@ socket.on('resetSpecialEvent', ({Event}) => {
 
     document.getElementById('specialEventStrong').innerHTML = "Special Event";
     resetDice();
+    currentEvent = undefined;
+    specialEventButton.disabled = false;
+});
+
+socket.on('resetSpecialEventGeneral' ,() => {
+    document.getElementById('specialEventStrong').innerHTML = "Special Event";
+    resetDice();
+    currentEvent = undefined;
     specialEventButton.disabled = false;
 });
 
@@ -244,9 +256,69 @@ socket.on('canYouPlay', ({player}) => {
             resultForPoints.push(Number(document.getElementById('dice7').alt));
             break;
         }
+
+        /*  The purpose of this event case is to lock dice of value given
+            the event All or Nothing
+        */
+        case "allOrNothing": {
+            /*  Creates a frequency list of the rolls. */
+            let frequencyOfNumber = new Array(6).fill(0);
+
+            for (let i = 0; i < 6; i++) {
+                frequencyOfNumber[document.getElementById(`dice${i+1}`).alt - 1]++;
+            }
+
+
+            // If there is 6 of a kind, lock everything and set frequency to 0.
+            if (frequencyOfNumber.includes(6)) {
+                for (let i = 0; i < 6; i++) {
+                    keepDiceArray[i] = true;
+                    const keepButton = document.getElementById(`keepDiceButton${i+1}`);
+                    keepButton.style.backgroundColor = '#FFCCCB';
+                    keepButton.disabled = true;
+                }
+                frequencyOfNumber[frequencyOfNumber.indexOf(6)] = 0;
+            }
+
+            // Locks every instance of dice adding. Specifically 1 + 4 and 2 + 3.
+            while (frequencyOfNumber[0] >= 1 && frequencyOfNumber[3] >= 1) {
+                lockKeepButtonForDice(1, 1);
+                lockKeepButtonForDice(4, 1);
+                frequencyOfNumber[0]--, frequencyOfNumber[3]--;
+            }
+            
+            while (frequencyOfNumber[1] >= 1 && frequencyOfNumber[2] >= 1) {
+                lockKeepButtonForDice(2, 1);
+                lockKeepButtonForDice(3, 1);
+                frequencyOfNumber[1]--, frequencyOfNumber[2]--;
+            }
+
+            // If a dice appears 3 times, lock them.
+            for (let i = 0; i < frequencyOfNumber.length; i++) {
+                if (frequencyOfNumber[i] >= 3) {
+                    lockKeepButtonForDice(i+1, 3);
+                    frequencyOfNumber[i] -= 3;
+                }
+            }
+
+            // Lock every instance of 1 and 5.
+            if (frequencyOfNumber[0] > 0) {
+                lockKeepButtonForDice(1, frequencyOfNumber[0]);
+                frequencyOfNumber[0] = 0;
+            }
+
+            if (frequencyOfNumber[4] > 0) {
+                lockKeepButtonForDice(5, frequencyOfNumber[4]);
+                frequencyOfNumber[0] = 0;
+            }
+
+            break;
+        }
     }
 
     console.log(resultForPoints);
+    console.log(keepDiceArray);
+    
     
     socket.emit('rollDice', {
         username: currentUsername, 
@@ -257,7 +329,26 @@ socket.on('canYouPlay', ({player}) => {
         resultForPoints});
 });
 
+/*  This function looks through every dice for a specific number and 
+    locks that dice's keep button and locks the specific amount "Count" 
+*/
+function lockKeepButtonForDice(number, count) {
+    let counter = 0;
+    for (let i = 0; i < 6; i++) {
+        /*  if the dice isn't already locked, is the right number, 
+            and you haven't found the right amount, lock it.
+        */
 
+        let diceValue = parseInt(document.getElementById(`dice${i+1}`).alt);
+        if (keepDiceArray[i] === false && diceValue === number && counter < count) {
+            keepDiceArray[i] = true;
+            const keepButton = document.getElementById(`keepDiceButton${i+1}`);
+            keepButton.style.backgroundColor = '#FFCCCB';
+            keepButton.disabled = true;
+            counter++;
+        }
+    }
+}
 function animateDice(dice, index) {
     let delay = 15;
     let delayIncrement = 50;
@@ -365,6 +456,7 @@ function updateAllGameInformation(room) {
         gameInformationVBox.appendChild(paragraph);
     }
     turnInformation.textContent = `${room.clients[room.turnNumber]}'s turn`;
+    currentPlayer = room.clients[room.turnNumber];
 }
 
 

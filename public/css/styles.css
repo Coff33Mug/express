@@ -25,7 +25,7 @@
     align-items: center;
 }
 
-.centerWrapper .contentBox{
+.centerWrapper .contentBox {
     background-color: #404040;
     width: 450px;
     
@@ -40,7 +40,7 @@
 #gameContentBox {
     background-color: #404040;
     width: auto;
-    height: 400px;
+    height: 380px;
     
     border-style: solid;
     border-radius: 10px;
@@ -49,11 +49,59 @@
     align-items: center;
 }
 
-/* Makes game elements stack vertically when screen is too small */
+/*  Makes game elements stack vertically when screen is too small
+    and changes lobby elements to stack
+*/
 @media (max-width: 700px)  {
+    /* Game CSS */
     #gameContentBox {
         flex-direction: column;
         height: auto;
+    }
+
+    .diceImage {
+        width: 60px !important;
+    }
+
+    .diceContainer {
+        margin-bottom: 10px !important;
+    }
+
+    .keepDiceButton {
+        width: 55px;
+        padding-left: 0px !important;
+        padding-right: 0px !important;
+        margin-right: 15px !important;
+    }
+
+    .keepDiceButtonLower {
+        width: 55px;
+        padding-left: 0px !important;
+        padding-right: 0px !important;
+        margin-right: 15px !important;
+        margin-top: -13px !important;
+    }
+
+    #gameInformationVBox {
+        height: 150px !important;
+    }
+    
+    /* Lobby CSS */
+    .contentBox {
+        flex-direction: column;
+    }
+
+    .centerWrapper .contentBox {
+        width: auto;
+    }
+
+    #roomDisplayBox {
+        background-color: darkgray;
+        border-left: 0px solid;
+        border-top-right-radius: 0px;
+        border-bottom-left-radius: 10px;
+        border-top: 4px solid;
+        overflow-y: auto;
     }
 }
 
@@ -75,6 +123,9 @@ nav {
     background-color: #404040;
     margin-bottom: 10px;
     box-shadow: 0px -10px 100px black;
+    top: 0;
+    left: 0;
+    position: sticky;
 }
 
 nav ul {
@@ -103,6 +154,8 @@ nav li:first-child {
     margin-right: auto;
 }
 
+
+
 nav a:hover{
     background-color: black;
 }
@@ -129,8 +182,6 @@ nav button {
     font-family: cursive;
 }
 
-
-
 p {
     color: black;
 }
@@ -146,6 +197,7 @@ body {
 button {
     display: block;
     margin-top: 5px;
+    background-color: gray;
 }
 
 #leaveRoomButton {
@@ -153,13 +205,10 @@ button {
     
 }
 
-button {
-    background-color: gray;
-}
-
 input { 
     max-width: 190px;
     background-color: white;
+    height: 20px;
     border-radius: .5rem;
     transition: all 0.3s cubic-bezier(0.19, 1, 0.22, 1);
 }
@@ -170,15 +219,21 @@ input {
     padding: 10px;
     position: relative;
     width: 200px;
+    
 }
 
 #inputContainer p {
     color: aliceblue;
+    font-size: 20px;
+}
+
+#inputContainer button {
+    width: 110px;
 }
 
 .roomDisplayBox{
     width: 220px;
-    height: 145px;
+    height: 160px;
     padding: 5px;
     
     background-color: darkgray;
@@ -186,7 +241,6 @@ input {
     border-top-right-radius: 10px;
     border-bottom-right-radius: 10px;
     overflow-y: auto;
-    transition: 0.5s;
 
     display: flex;
     flex-direction: column;
@@ -215,15 +269,6 @@ input {
     margin-bottom: 30px;
 }
 
-.dice {
-    color:black;
-    border: 2px solid black;
-    background-color: aliceblue;
-    display: inline;
-    padding: 10px;
-    margin: 5px;
-}
-
 .diceImage {
     width: 66px;
 }
@@ -238,7 +283,16 @@ input {
     padding-right: 15px;
     margin-left: 5px;
     margin-right: 11px;
-    margin-bottom: 15px;
+    margin-bottom: 1px;
+}
+
+.keepDiceButtonLower {
+    background-color: LightGray;
+    padding-left: 15px;
+    padding-right: 15px;
+    margin-left: 5px;
+    margin-right: 11px;
+    margin-top: -40px;
 }
 
 #turnDisplay {
@@ -267,13 +321,20 @@ input {
     padding: 20px;
     margin-bottom: 10px;
     background-color: darkgray;
-    border-radius: 50px;
+    border-radius: 0px;
     overflow-y: auto;
 }
 
 #gameInformationVBox p {
+    height: 25px;
     margin-left: 5px;
+    margin-bottom: 10px;
     font-size: 20px;
+    border: #404040 ;
+    border-style: solid;
+    border-radius: 10px;
+    padding-left: 10px;
+    background-color: white;
 }
 
 #clientCount {
