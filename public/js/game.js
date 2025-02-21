@@ -121,8 +121,7 @@ specialEventButton.addEventListener('click', function () {
         return;
     }
 
-    // let randomNumber = Math.floor((Math.random() * 5));
-    let randomNumber = 4;
+    let randomNumber = Math.floor((Math.random() * 5));
     const Event = specialEvents[randomNumber];
     currentEvent = Event;
     specialEventButton.disabled = true;
