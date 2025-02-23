@@ -83,6 +83,19 @@ io.on('connection', socket => {
             socket.emit('canYouPlay', ({player}));
         }
     });
+
+    socket.on('addPotentialPointsToPlayer', ({result, username, roomName}) => {
+        const room = rooms.find(r => r.name === roomName);
+
+        if (!room) {
+            console.log("room not found in addPotentialPointsToPlayer");
+        }
+
+        const userIndex = room.clients.indexOf(username);
+        const possiblePoints = calculatePoints(result);
+
+        room.clients.possiblePoints[userIndex] += possiblePoints;
+    });
     
     /*
     This request comes from game.js after a person leaves. requestAllInformation... should
@@ -123,20 +136,24 @@ io.on('connection', socket => {
         let points;
         let keptPoints;
         
+        // Switch case for how points are calculated based on Event.
         switch (event) {
             case ">=500": {
                 points = calculatePointsEventBased(resultForPoints).points;
                 keptPoints = calculatePointsEventBased(keptDice).points;
+                break;
             }
 
             case "allOrNothing": {
                 points = calculatePointsEventBased(resultForPoints).points;
                 keptPoints = calculatePointsEventBased(keptDice).points;
+                break;
             }
 
             default: {
                 points = calculatePoints(resultForPoints).points;
                 keptPoints = calculatePoints(keptDice).points;
+                break;
             }
         }
 
@@ -150,12 +167,18 @@ io.on('connection', socket => {
             socket.emit('enableKeepDiceButtons');
             io.to(roomName).emit('resetSpecialEventGeneral');
         }
-        
-        // Sets points for player
-        room.possiblePoints[userIndex] = points;
-        room.possiblePoints[userIndex] += keptPoints;
-        
-        io.to(roomName).emit('updateClientDice', ({room, result})); // Sent to game.js
+
+        // Switch case for how points are added to player's potential points
+        switch (event) {
+            default: {
+                // Sets points for player
+                room.possiblePoints[userIndex] = points;
+                room.possiblePoints[userIndex] += keptPoints;
+                
+                io.to(roomName).emit('updateClientDice', ({room, result})); // Sent to game.js
+                break;
+            }
+        }
     });
     
     /*  When Keep hand is recieved, update point values for player
@@ -270,6 +293,35 @@ io.on('connection', socket => {
         socket.emit('enableKeepDiceButtons');
         io.to(roomName).emit('updateGameInformation', ({room})); // Sent to game.js
     });
+
+
+    // This keep hand is specifically for the event of TwoForTwo.
+    socket.on('keepHandTwoForTwo' , ({username, roomName, result, prevResult}) => {
+        let room = rooms.find(r => r.name === roomName);
+        if (!room) {
+            console.log("Room not found in keepHandTwoForTwo");
+        }
+
+        const handOneFilled = calculatePointsEventBased(prevResult).handFilled;
+        const handTwoFilled = calculatePointsEventBased(result).handFilled;
+        const handOnePoints = calculatePointsEventBased(prevResult).points;
+        const handTwoPoints = calculatePointsEventBased(result).points;
+        const userIndex = room.clients.indexOf(username);
+
+        console.log(handOnePoints + " " + handTwoPoints);
+
+        if (handOneFilled && handTwoFilled) {
+            room.points[userIndex] += (handOnePoints + handTwoPoints) * 2;
+        } 
+
+        // Updates turn and re-enable buttons on player
+        room.turnNumber++;
+        room.turnNumber = room.turnNumber % room.clients.length;
+
+        socket.emit('enableKeepDiceButtons');
+        io.to(roomName).emit('resetSpecialEventGeneral');
+        io.to(roomName).emit('updateGameInformation', ({room})); // Sent to game.js
+    });
     
     // Sends out the event type to all users of a room
     socket.on('newSpecialEvent', ({roomName, Event}) => {
@@ -307,6 +359,11 @@ io.on('connection', socket => {
 
             case "allOrNothing": {
                 io.to(roomName).emit('eventAllOrNothing');
+                break;
+            }
+
+            case "twoForTwo": {
+                io.to(roomName).emit('eventTwoForTwo');
                 break;
             }
         }
