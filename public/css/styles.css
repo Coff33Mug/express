@@ -25,15 +25,29 @@
     align-items: center;
 }
 
+.horizontalWrapper {
+    display: flex; 
+    justify-content: center;
+}
+
 .centerWrapper .contentBox {
     background-color: #404040;
     width: 450px;
-    
     border-style: solid;
     border-radius: 10px;
     display: flex;
     justify-content: center;
     align-items: center;
+}
+
+.gridWrapper {
+    display: grid;
+    height: 100vh;
+    grid-template-columns: 150px 1fr;
+    width: clamp(500px, 60vw, 800px);
+    grid-template-rows: auto;
+    margin: 0 auto;
+    gap: 20px;
 }
 
 /* Holds every element related to the game */
@@ -103,6 +117,13 @@
         border-top: 4px solid;
         overflow-y: auto;
     }
+
+    /* Instructions page */
+    .gridWrapper {
+        transform: translate(0%);
+        transition: .2s;
+        width: 100vw;
+    }
 }
 
 /* Puts a box around the game information and dice */
@@ -125,6 +146,9 @@ nav {
     box-shadow: 0px -10px 100px black;
     top: 0;
     left: 0;
+    margin: 0;
+    padding: 0;
+    z-index: 1;
     position: sticky;
 }
 
@@ -154,8 +178,6 @@ nav li:first-child {
     margin-right: auto;
 }
 
-
-
 nav a:hover{
     background-color: black;
 }
@@ -180,6 +202,105 @@ nav button {
     background-color: #404040;
     color: aliceblue;
     font-family: cursive;
+}
+
+/*  Side bar
+*/
+
+.sideBar {
+    display: flex;
+    justify-content: center;
+    height: 100vh;
+    width: 150px;
+    border-right: solid #404040;
+    border-left: solid #404040;
+}
+
+.sideBarElement ul:first-child{
+    margin-top: 50px;
+}
+
+.sideBarElement a {
+    text-decoration: none;
+    padding: 5px 20px;
+    display: flex;
+    align-items: center;
+    color: black;
+    transition: 0.2s;
+}
+
+.sideBarElement a:hover {
+    background-color: lightgray;
+}
+
+
+.sideBarElement li{
+    list-style: none;
+    position: relative;
+    right: 20px;
+}
+
+.sideBarElement h3 {
+    margin-top: 20px;
+    margin-left: 23px;
+    margin-bottom: 10px;
+    text-decoration: underline;
+}
+
+.mainContent {
+    grid-column-start: 2;
+    grid-row-start: 1;
+    display: flex;
+    margin-left: 5px;
+    overflow-y: auto;
+    width: auto;
+    word-wrap: break-word;
+    border-right: solid #404040;
+}
+
+.mainContentSection {
+    margin-top: 10px;
+    margin-bottom: 30px;
+}
+
+.mainContentSection h1 h2 h3 p {
+    word-wrap: break-word;
+    max-width: auto;
+}
+
+.mainContentSection h1 {
+    font-size: 30px;
+    line-height: 35px;
+    margin-bottom: 10px;
+}
+
+.mainContentSection h2 {
+    font-size: 25px;
+    line-height: 30px;
+    margin-left: 5px;
+    margin-bottom: 5px;
+    margin-top: 20px;
+}
+
+.mainContentSection img {
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.mainContentSection p {
+    margin-left: 5px;
+    margin-right: 5px;
+    line-height: 30px;
+    font-size: 20px;
+}
+
+.mainContentSection .noteBox {
+    height: fit-content;
+    background-color: darkgray;
+    border-left: solid;
+    padding: 7px;
+    margin: 15px 0px;
+    border-radius: 2px;
 }
 
 p {

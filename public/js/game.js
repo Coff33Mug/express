@@ -6,14 +6,17 @@ const clientCountParagraph = document.getElementById('clientCount');
 const gameInformationVBox = document.getElementById('gameInformationVBox');
 const turnInformation = document.getElementById('turnDisplayParagraph');
 const keepDiceArray = new Array(6).fill(false);
-const specialEvents = ["extraDice", "skipTurn", ">=500", "retribution", "allOrNothing"];
+const specialEvents = ["extraDice", "skipTurn", ">=500", "retribution", "allOrNothing", "twoForTwo"];
 let currentRoom;
 let currentRoomName;
 let currentUsername;
 let currentPlayer;
 let currentEvent;
 let firstTurn = true;
+let firstHandKeep = true;
 let prevResult = new Array(6).fill(0);
+let prevResultForEvent = new Array(6).fill(0);
+
 
 // Events that respond to server emits
 
@@ -121,8 +124,7 @@ specialEventButton.addEventListener('click', function () {
         return;
     }
 
-    // let randomNumber = Math.floor((Math.random() * 5));
-    let randomNumber = 4;
+    let randomNumber = Math.floor((Math.random() * 6));
     const Event = specialEvents[randomNumber];
     currentEvent = Event;
     specialEventButton.disabled = true;
@@ -160,6 +162,10 @@ socket.on('eventRetribution', () => {
 
 socket.on('eventAllOrNothing', () => {
     document.getElementById('specialEventStrong').innerHTML = "All or Nothing!";
+});
+
+socket.on('eventTwoForTwo', () => {
+    document.getElementById('specialEventStrong').innerHTML = "Two for Two!";
 });
 
 
@@ -316,8 +322,8 @@ socket.on('canYouPlay', ({player}) => {
         }
     }
 
-    console.log(resultForPoints);
-    console.log(keepDiceArray);
+    console.log(prevResultForEvent);
+    console.log(prevResult);
     
     
     socket.emit('rollDice', {
@@ -393,17 +399,50 @@ document.getElementById('keepHandButton').addEventListener('click', function () 
     for (let i = 0; i <= 5; i++) {
         result[i] = document.getElementById(`dice${i+1}`).alt;
     }
-    
-    if (currentEvent === "extraDice") {
-        result[6] = document.getElementById('dice7').alt;
-    }
 
-    console.log(result);
-    socket.emit('keepHand', {
-        username: currentUsername, 
-        roomName: currentRoomName, 
-        result,
-        Event:currentEvent});
+    switch (currentEvent) {
+        case "extraDice": {
+            result[6] = document.getElementById('dice7').alt;
+
+            console.log(result);
+            socket.emit('keepHand', {
+                username: currentUsername, 
+                roomName: currentRoomName, 
+                result,
+                Event:currentEvent});
+
+            break;
+        } 
+
+        case "twoForTwo": {
+            // If it's the players first hand that they kept, keep what they kept.
+            if (firstHandKeep === true) {
+                firstHandKeep = false;
+                prevResultForEvent = prevResult.slice();
+                resetDice();
+                enableKeepDiceButtons();
+            } else {
+                firstHandKeep = true;
+                socket.emit('keepHandTwoForTwo', {
+                    username: currentUsername, 
+                    roomName: currentRoomName, 
+                    result,
+                    prevResult: prevResultForEvent});
+                prevResultForEvent.fill(0);
+                console.log(prevResultForEvent);
+            }
+            break;
+        }
+
+        default: {
+            console.log(result);
+            socket.emit('keepHand', {
+                username: currentUsername, 
+                roomName: currentRoomName, 
+                result,
+                Event:currentEvent});
+        }
+    }
 });
 
 /*  Event listener for the buttons that allow you to keep dice.
@@ -435,8 +474,7 @@ function disableKeepDiceButtons(keepDiceArray) {
     }
 }
 
-// Enables all the keep dice buttons after player's turn ends
-socket.on('enableKeepDiceButtons', () => {
+function enableKeepDiceButtons() {
     for (let i = 0; i <= 5; i++) {
         const keepButton = document.getElementById(`keepDiceButton${i+1}`);
         if (keepDiceArray[i] === true) {
@@ -445,6 +483,11 @@ socket.on('enableKeepDiceButtons', () => {
             keepButton.style.backgroundColor = 'LightGray';
         }
     }
+}
+
+// Enables all the keep dice buttons after player's turn ends
+socket.on('enableKeepDiceButtons', () => {
+    enableKeepDiceButtons();
 });
 
 function updateAllGameInformation(room) {
