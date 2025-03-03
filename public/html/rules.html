@@ -1,0 +1,147 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel = "styleSheet" href = "../css/styles.css">
+    <title>Core mechanics</title>
+</head>
+<body style="overflow-y: hidden;"> 
+    <nav>
+        <ul>
+            <li><a href="./lobby.html">Multiplayer</a></li>
+            <li><a href="">About me</a></li>
+            <li><a href="https://github.com/Coff33Mug/express">Github</a></li>
+            <li><img id= "catImage" src="../images/cat.gif"> </img></li>
+        </ul>
+    </nav>
+    
+    <div class="gridWrapper">
+        <aside class="sideBar">
+            <div class="sideBarElement">
+                <h3>Getting Started</h3>
+                <ul>
+                    <li><a href="./rules.html">Core mechanics</a> </li>
+                    <li><a href="./combinations.html">Combinations</a> </li>
+                    <li><a href="./events.html">Events</a> </li>
+                </ul>
+            </div>
+        </aside>
+        <div class="mainContent">
+            <article class="mainContentSection" id="mainContentSection">
+                <h1>Core mechanics</h1>
+                <h2>Dice</h2>
+                <p>Players are given 6 dice to roll for points where:</p>
+                <div class="horizontalWrapper">
+                    <img class="diceImage"src="../images/dice1.png">
+                    <img class="diceImage"src="../images/dice5.png">
+                </div>
+                
+                <p>100 points and 50 points respectively. 
+                Your goal as the player is to get as many points as possible! 
+                Although 100 and 50 points don't seem like much, 
+                it's possible to get combinations of dice for 
+                significantly larger amount of points! 
+                Read more about this in combinations.
+                </p>
+
+                <h2>Events</h2>
+                <p>Alongside these dice, there are also special events!
+                During your turn, you can press the event button to try your luck.
+                </p>
+                <div class="horizontalWrapper">
+                    <div class="gameElementWrapper" style="width: 95px;">
+                        <strong id="specialEventStrong">Special Event</strong>
+                        <button id="specialEventButton">Try your luck</button>
+                    </div>
+                </div>
+                <p>There are events ranging from bonus points
+                to completely losing your turn. High risk high reward!</p>
+                <h2>Keeping Dice</h2>
+                <p>When rolling your dice, 
+                it's possible to keep dice from previous rolls.
+                Most often, you'll be keeping dice that are of value or 
+                have the possibility of becoming super valuable.
+                For example you rolled: 
+                </p>
+                <div class="horizontalWrapper">
+                    <img class="diceImage"src="../images/dice4.png">
+                    <img class="diceImage"src="../images/dice4.png">
+                    <img class="diceImage"src="../images/dice3.png">
+                </div>
+
+                <div class="horizontalWrapper">
+                    <img class="diceImage"src="../images/dice6.png">
+                    <img class="diceImage"src="../images/dice1.png">
+                    <img class="diceImage"src="../images/dice2.png">
+                </div>
+                
+                <p>You could keep your 2, 4 dices for the possiblity
+                that next hand you rolled a 4 resulting in 400 points!
+                </p>
+
+                <div class="noteBox">
+                    <strong>Note:</strong>
+                    <p>You can only reroll if you roll something of value.</p>
+                </div>
+
+                <h2>Filling your hand</h2>
+                <p>Filling your hand means that when you keep your hand,
+                    every dice in your hand is of value. Ex:
+                </p>
+
+                <div class="horizontalWrapper">
+                    <img class="diceImage"src="../images/dice1.png">
+                    <img class="diceImage"src="../images/dice3.png">
+                    <img class="diceImage"src="../images/dice2.png">
+                </div>
+
+                <div class="horizontalWrapper">
+                    <img class="diceImage"src="../images/dice1.png">
+                    <img class="diceImage"src="../images/dice1.png">
+                    <img class="diceImage"src="../images/dice5.png">
+                </div>
+
+                <p>This is an example of 1100 points!
+                Best you keep your hand. This is an example of a filled hand
+                where if you had the event:
+                </p>
+
+                <div class="horizontalWrapper">
+                    <div class="gameElementWrapper" style="width: 150px;">
+                        <strong id="specialEventStrong">Fill with over 500 for 500+ points!</strong>
+                        <button id="specialEventButton">Try your luck</button>
+                    </div>
+                </div>
+
+                <p>You'd get 1600 points for this hand!</p>
+
+                <h2>Busting</h2>
+                <p>Aw man, you just rolled this hand:</p>
+                <div class="horizontalWrapper">
+                    <img class="diceImage"src="../images/dice6.png">
+                    <img class="diceImage"src="../images/dice6.png">
+                    <img class="diceImage"src="../images/dice3.png">
+                </div>
+
+                <div class="horizontalWrapper">
+                    <img class="diceImage"src="../images/dice4.png">
+                    <img class="diceImage"src="../images/dice3.png">
+                    <img class="diceImage"src="../images/dice4.png">
+                </div>
+
+                <p>None of your dice are of 
+                value meaning you just bust and lost your turn.
+                </p>
+                <div class="noteBox">
+                    <strong>Note:</strong>
+                    <p>Any kept dice will not be counted in your next hand 
+                        meaning if you the value of previously kept dice is not considered.
+                    </p>
+                </div>
+                <h1 style="font-size: 100px; opacity: 0;">filler text</h1>
+            </article>
+        </div>
+        <div>
+            
+        </body>
+        </html>

@@ -39,6 +39,18 @@ app.get('/localGame.html', function(req, res, next) {
     res.sendFile(path.join(__dirname, 'public', 'html/localGame.html'));
 });
 
+app.get('/rules.html', function(req, res, next) {
+    res.sendFile(path.join(__dirname, 'public', 'html/rules.html'));
+});
+
+app.get('/combinations.html', function(req, res, next) {
+    res.sendFile(path.join(__dirname, 'public', 'html/combinations.html'));
+});
+
+app.get('/events.html', function(req, res, next) {
+    res.sendFile(path.join(__dirname, 'public', 'html/events.html'));
+});
+
 // Server's connection to port
 server.listen(port, () => {
     console.log(`Connection for port ${port} successful`);
@@ -231,7 +243,8 @@ io.on('connection', socket => {
                 /*  Goes through every player to find who has the most points.
                     Given the case that multiple players have the same amount of points,
                     they are added to the users array. All players that have the same amount of points
-                    lose 3000 points.
+                    lose 3000 points. Given they have less than 3000 points,
+                    they will only lose their current points
                 */  
                 for (let i = 0; i < room.clients.length; i++) {
                     if (room.points[i] === 0) {
@@ -247,11 +260,22 @@ io.on('connection', socket => {
                     }
                 }
 
+                // If there is only one person, check their points. Otherwise check everyone in
+                // the array's points.
                 if (users.length === 1) {
-                    room.points[retributionUserIndex] -= 3000;
+                    if (room.points[retributionUserIndex] >= 3000) {
+                        room.points[retributionUserIndex] -= 3000;
+                    } else {
+                        room.points[retributionUserIndex] = 0;
+                    }
+                    
                 } else {
                     for (let i = 0; i < users.length; i++) {
-                        room.points[users[i]] -= 3000;
+                        if (room.points[users[i]] >= 3000) {
+                            room.points[users[i]] -= 3000;
+                        } else {
+                            room.points[users[i]] = 0;
+                        }
                     }
                 }
 
