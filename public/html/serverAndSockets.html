@@ -1,0 +1,80 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel = "styleSheet" href = "../css/styles.css">
+    <title>Core mechanics</title>
+</head>
+<body style="overflow-y: hidden;"> 
+    <nav>
+        <ul>
+            <li><a href="./lobby.html">Multiplayer</a></li>
+            <li><a href="./localGame.html">Local Lobby</a></li>
+            <li><a href="">About me</a></li>
+            <li><a href="https://github.com/Coff33Mug/express">Github</a></li>
+            <li><img id= "catImage" src="../images/cat.gif"> </img></li>
+        </ul>
+    </nav>
+    
+    <div class="gridWrapper">
+        <aside class="sideBar">
+            <div class="sideBarElement">
+                <h3>Getting Started</h3>
+                <ul>
+                    <li><a href="./rules.html">Core mechanics</a> </li>
+                    <li><a href="./combinations.html">Combinations</a> </li>
+                    <li><a href="./events.html">Events</a> </li>
+                </ul>
+                <h3>Documentation</h3>
+                <ul>
+                    <li><a href="./beginning.html">The beginning</a> </li>
+                    <li><a href="./techStack.html">Tech stack</a> </li>
+                    <li><a href="./techStack.html">Server and Sockets</a> </li>
+                </ul>
+            </div>
+        </aside>
+        <div class="mainContent">
+            <article class="mainContentSection" id="mainContentSection">
+                <h1>Server and Sockets</h1>
+                <h2>Creating a server</h2>
+                <p>Through a youtube video, a bit of documentation, 
+                    and my professor's project as reference,
+                    I was able to set up a server using express which dealt 
+                    with self connections to my local device.
+                </p>
+                <div class="noteBox"><Strong>Note:</Strong><p>
+                    Prior to this project, I was considering using Spring Boot and Java for my backend
+                </p></div>
+                <h2>Sockets and rooms</h2>
+                <p>Alongside Express for users to connect to a server, 
+                    I picked up socket.io to allow users to communicate with each other.
+                    I took some of the information from the youtube videos 
+                    which dealt with sending client to client messages and instead
+                    took a client's input and expressed it to everyone connected 
+                    in the form of points and their roll of dice.
+                </p>
+                <h1 style="font-size: 50px; opacity: 0;">filler text</h1>
+                <p>Frankly the most time consuming and difficult part 
+                    of this project ended up being rooms. I figured out about rooms early in 
+                    the project when looking through socket documentation 
+                    and thought it was super interesting. The reason for 
+                    implementing rooms allowed for multiple games to be
+                    going on at the same time.
+                </p>
+                <div class="noteBox"><Strong>Note:</Strong><p>
+                    This was the buggiest feature I've made!
+                    Tons of testing were required to fix bugs
+                    such as:
+                </p>
+                <p>- improper count of players being displayed</p>
+                <p>- removing users under multiple circumstances</p>
+                <p>- rooms not being successfully joined due to socket ID changes</p>
+                <p> and so much more... check out the commit history for all of them.</p>
+                </div>
+                <h1 style="font-size: 100px; opacity: 0;">filler text</h1>
+            </article>
+        </div>
+        <div>
+            
+        </body>
+        </html>

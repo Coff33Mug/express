@@ -51,6 +51,17 @@ app.get('/events.html', function(req, res, next) {
     res.sendFile(path.join(__dirname, 'public', 'html/events.html'));
 });
 
+app.get('/beginning.html', function(req, res, next) {
+    res.sendFile(path.join(__dirname, 'public', 'html/beginning.html'));
+});
+
+app.get('/techStack.html', function(req, res, next) {
+    res.sendFile(path.join(__dirname, 'public', 'html/techStack.html'));
+});
+
+app.get('/serverAndSockets.html', function(req, res, next) {
+    res.sendFile(path.join(__dirname, 'public', 'html/serverAndSockets.html'));
+});
 // Server's connection to port
 server.listen(port, () => {
     console.log(`Connection for port ${port} successful`);
