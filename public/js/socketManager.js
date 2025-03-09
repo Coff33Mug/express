@@ -1,6 +1,7 @@
-const socket = io("https://fill-or-bust.vercel.app/");
-
-
+const socket = io("https://fill-or-bust.vercel.app", {
+    transports: ['polling']
+  });
+  
 let connection = null;
 class socketManager {
     constructor() {
