@@ -1,4 +1,4 @@
-const socket = io("https://fill-or-bust-g21zrzms0-coff33mugs-projects.vercel.app/");
+const socket = io("https://fill-or-bust.vercel.app/");
 
 let connection = null;
 class socketManager {
