@@ -1,14 +1,21 @@
 // Requirements for Express
-const express = require('express');
-const path = require('path');
+import express from 'express';
+import path from 'path';
 const app = express();
 // Check for enviornment port or default to port 3000
 const port = 3000 || process.env.port;
 // Requirements for Socket.io 
-const socketio = require('socket.io');
-const http = require('http');
-const server = http.createServer(app);
-const io = socketio(server);
+import { createServer } from 'http';
+import { Server } from 'socket.io';
+const server = createServer(app);
+const io = new Server(server);
+
+// Don't ask me idk what this does just yet
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Makes public folder the static folder
 app.use(express.static(path.join(__dirname, 'public')));

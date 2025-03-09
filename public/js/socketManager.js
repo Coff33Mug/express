@@ -1,5 +1,6 @@
 const socket = io("https://fill-or-bust.vercel.app/");
 
+
 let connection = null;
 class socketManager {
     constructor() {
