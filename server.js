@@ -39,8 +39,8 @@ app.get('/localGame.html', function(req, res, next) {
     res.sendFile(path.join(__dirname, 'public', 'html/localGame.html'));
 });
 
-app.get('/rules.html', function(req, res, next) {
-    res.sendFile(path.join(__dirname, 'public', 'html/rules.html'));
+app.get('/index.html', function(req, res, next) {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 app.get('/combinations.html', function(req, res, next) {
