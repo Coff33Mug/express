@@ -10,7 +10,8 @@ import { Server } from 'socket.io';
 const server = createServer(app);
 const io = new Server(server, {
     cors: {
-      origin:"https://fill-or-bust.vercel.app/",
+      origin:["https://fill-or-bust.vercel.app",
+      "https://fill-or-bust-git-vercel-coff33mugs-projects.vercel.app"],
       methods: ["GET", "POST"],
       credentials: true
     }
