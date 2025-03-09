@@ -8,7 +8,13 @@ const port = 3000 || process.env.port;
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 const server = createServer(app);
-const io = new Server(server);
+const io = new Server(server, {
+    cors: {
+      origin:"https://fill-or-bust.vercel.app/",
+      methods: ["GET", "POST"],
+      credentials: true
+    }
+});
 
 // Don't ask me idk what this does just yet
 import { fileURLToPath } from 'url';
