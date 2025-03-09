@@ -1,4 +1,4 @@
-const socket = io("http://192.168.0.213:3000/");
+const socket = io("https://fill-or-bust-g21zrzms0-coff33mugs-projects.vercel.app/");
 
 let connection = null;
 class socketManager {
