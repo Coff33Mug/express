@@ -13,7 +13,7 @@ const io = new Server(server, {
       origin:["https://fill-or-bust.vercel.app",
       "https://fill-or-bust-git-vercel-coff33mugs-projects.vercel.app"],
       methods: ["GET", "POST"],
-      transports: ['polling'],ock
+      transports: ['polling'],
       credentials: true
     }
 });
