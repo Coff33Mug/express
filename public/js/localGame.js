@@ -4,7 +4,7 @@ const gameInformationVBox = document.getElementById('gameInformationVBox');
 const turnInformation = document.getElementById('turnDisplayParagraph');
 const specialEventButton = document.getElementById('specialEventButton');
 const keepDiceArray = new Array(6).fill(false);
-const specialEvents = ["extraDice", "skipTurn", ">=500"];
+const specialEvents = ["extraDice", "skipTurn", ">=500", "retribution", "allOrNothing", "twoForTwo"];
 let previouslyKeptDice = new Array(6).fill(false);
 const room = {
     clients: [],
@@ -15,7 +15,9 @@ const room = {
 let currentPlayer;
 let currentEvent;
 let firstTurn = true;
+let firstHandKeep = true;
 let prevResult = new Array(6).fill(0);
+let prevResultForEvent = new Array(6).fill(0);
 
 document.getElementById('addUserButton').addEventListener('click', function () {
     const username = document.getElementById('addUserInput').value;
@@ -90,6 +92,64 @@ document.getElementById('rollDiceButton').addEventListener('click', function () 
             resultForPoints.push(Number(document.getElementById('dice7').alt));
             break;
         }
+
+        /*  The purpose of this event case is to lock dice of value given
+            the event All or Nothing
+        */
+        case "allOrNothing": {
+            /*  Creates a frequency list of the rolls. */
+            let frequencyOfNumber = new Array(6).fill(0);
+
+            for (let i = 0; i < 6; i++) {
+                frequencyOfNumber[document.getElementById(`dice${i+1}`).alt - 1]++;
+            }
+
+
+            // If there is 6 of a kind, lock everything and set frequency to 0.
+            if (frequencyOfNumber.includes(6)) {
+                for (let i = 0; i < 6; i++) {
+                    keepDiceArray[i] = true;
+                    const keepButton = document.getElementById(`keepDiceButton${i+1}`);
+                    keepButton.style.backgroundColor = '#FFCCCB';
+                    keepButton.disabled = true;
+                }
+                frequencyOfNumber[frequencyOfNumber.indexOf(6)] = 0;
+            }
+
+            // Locks every instance of dice adding. Specifically 1 + 4 and 2 + 3.
+            while (frequencyOfNumber[0] >= 1 && frequencyOfNumber[3] >= 1) {
+                lockKeepButtonForDice(1, 1);
+                lockKeepButtonForDice(4, 1);
+                frequencyOfNumber[0]--, frequencyOfNumber[3]--;
+            }
+            
+            while (frequencyOfNumber[1] >= 1 && frequencyOfNumber[2] >= 1) {
+                lockKeepButtonForDice(2, 1);
+                lockKeepButtonForDice(3, 1);
+                frequencyOfNumber[1]--, frequencyOfNumber[2]--;
+            }
+
+            // If a dice appears 3 times, lock them.
+            for (let i = 0; i < frequencyOfNumber.length; i++) {
+                if (frequencyOfNumber[i] >= 3) {
+                    lockKeepButtonForDice(i+1, 3);
+                    frequencyOfNumber[i] -= 3;
+                }
+            }
+
+            // Lock every instance of 1 and 5.
+            if (frequencyOfNumber[0] > 0) {
+                lockKeepButtonForDice(1, frequencyOfNumber[0]);
+                frequencyOfNumber[0] = 0;
+            }
+
+            if (frequencyOfNumber[4] > 0) {
+                lockKeepButtonForDice(5, frequencyOfNumber[4]);
+                frequencyOfNumber[0] = 0;
+            }
+
+            break;
+        }
     }
     
     rollDice(room.clients[room.turnNumber], currentEvent, result, keptDice, resultForPoints);
@@ -103,6 +163,12 @@ function rollDice (username, event, result, keptDice, resultForPoints) {
         case ">=500": {
             points = calculatePointsEventBased(resultForPoints).points;
             keptPoints = calculatePointsEventBased(keptDice).points;
+        }
+
+        case "allOrNothing": {
+            points = calculatePointsEventBased(resultForPoints).points;
+            keptPoints = calculatePointsEventBased(keptDice).points;
+            break;
         }
 
         default: {
@@ -120,6 +186,7 @@ function rollDice (username, event, result, keptDice, resultForPoints) {
         room.possiblePoints[userIndex] = 0;
         specialEventButton.disabled = false;
         enableKeepDiceButtons();
+        resetSpecialEventGeneral();
     }
     
     // Sets points for player
@@ -137,7 +204,7 @@ function rollDice (username, event, result, keptDice, resultForPoints) {
 }
 
 document.getElementById('keepHandButton').addEventListener('click', function () {
-    // If it's your first turn, stop you from keeping hand
+    // If it's your first turn, stop you from keeping hand.
     if (firstTurn === true) {
         return;
     }
@@ -145,12 +212,41 @@ document.getElementById('keepHandButton').addEventListener('click', function () 
     firstTurn = true;
     let result = [];
 
+    // Grabs dice values and puts them into results
     for (let i = 0; i <= 5; i++) {
         result[i] = document.getElementById(`dice${i+1}`).alt;
     }
     
-    if (currentEvent === "extraDice") {
-        result[6] = document.getElementById('dice7').alt;
+    // if (currentEvent === "extraDice") {
+    //     result[6] = document.getElementById('dice7').alt;
+    // }
+
+    switch (currentEvent) {
+        case "extraDice": {
+            result[6] = document.getElementById('dice7').alt;
+            keepHand(currentPlayer, result, currentEvent);
+            break;
+        } 
+
+        case "twoForTwo": {
+            // If it's the players first hand that they kept, keep what they kept.
+            if (firstHandKeep === true) {
+                firstHandKeep = false;
+                prevResultForEvent = prevResult.slice();
+                resetDice();
+                enableKeepDiceButtons();
+            } else {
+                firstHandKeep = true;
+                keepHandTwoForTwo(currentPlayer, result, prevResultForEvent);
+                prevResultForEvent.fill(0);
+            }
+            break;
+        }
+
+        default: {
+            console.log(result);
+            keepHand(currentPlayer, result, currentEvent);
+        }
     }
 
     keepHand(room.clients[room.turnNumber], result, currentEvent);
@@ -172,7 +268,86 @@ function keepHand(username, result, Event) {
                 // Sets points for the player normally given you didn't fill your hand
                 room.points[userIndex] += room.possiblePoints[userIndex];
                 room.possiblePoints[userIndex] = 0;
+                console.log("Bonus points not given");
             }
+
+            // Updates turn and re-enable buttons on player
+            room.turnNumber++;
+            room.turnNumber = room.turnNumber % room.clients.length;
+            resetSpecialEvent(Event);
+            break;
+        }
+
+        case "retribution": {
+            // Gives player their points before checking if they filled their hand.
+            room.points[userIndex] += room.possiblePoints[userIndex];
+            room.possiblePoints[userIndex] = 0;
+
+            const handFilled = calculatePointsEventBased(result).handFilled;
+            // Nothing happens if hand isn't filled.
+            if (handFilled !== true) {
+                break;
+            }
+            
+            let largest = 0;
+            let retributionUserIndex;
+            let users = [];
+            /*  Goes through every player to find who has the most points.
+                Given the case that multiple players have the same amount of points,
+                they are added to the users array. All players that have the same amount of points
+                lose 3000 points. Given they have less than 3000 points,
+                they will only lose their current points
+            */  
+            for (let i = 0; i < room.clients.length; i++) {
+                if (room.points[i] === 0) {
+                    continue;
+                }
+
+                if (room.points[i] > largest && username !== room.clients[i]) {
+                    largest = room.points[i];
+                    retributionUserIndex = i;
+                    users[0] = i;
+                } else if (room.points[i] === largest && username !== room.clients[i]) {
+                    users.push(i);
+                }
+            }
+
+            // If there is only one person, check their points. Otherwise check everyone in
+            // the array's points.
+            if (users.length === 1) {
+                if (room.points[retributionUserIndex] >= 3000) {
+                    room.points[retributionUserIndex] -= 3000;
+                } else {
+                    room.points[retributionUserIndex] = 0;
+                }
+                
+            } else {
+                for (let i = 0; i < users.length; i++) {
+                    if (room.points[users[i]] >= 3000) {
+                        room.points[users[i]] -= 3000;
+                    } else {
+                        room.points[users[i]] = 0;
+                    }
+                }
+            }
+
+            // Updates turn and re-enable buttons on player
+            room.turnNumber++;
+            room.turnNumber = room.turnNumber % room.clients.length;
+            resetSpecialEvent(Event);
+            break;
+        }
+
+        case "allOrNothing": {
+            const handFilled = calculatePointsEventBased(result).handFilled;
+
+            // If their hand is not filled, they don't get points.
+            if (handFilled !== true) {
+                break;
+            }
+
+            room.points[userIndex] += room.possiblePoints[userIndex];
+            room.possiblePoints[userIndex] = 0;
             break;
         }
 
@@ -180,6 +355,11 @@ function keepHand(username, result, Event) {
             // Sets points for the player
             room.points[userIndex] += room.possiblePoints[userIndex];
             room.possiblePoints[userIndex] = 0;
+
+            // Updates turn and re-enable buttons on player
+            room.turnNumber++;
+            room.turnNumber = room.turnNumber % room.clients.length;
+            resetSpecialEventGeneral();
         }
     }
     
@@ -188,6 +368,26 @@ function keepHand(username, result, Event) {
     room.turnNumber = room.turnNumber % room.clients.length;
     enableKeepDiceButtons();
     resetSpecialEvent(Event);
+    updateAllGameInformation(room);
+}
+
+function keepHandTwoForTwo(username, result, prevResult) {
+    const handOneFilled = calculatePointsEventBased(prevResult).handFilled;
+    const handTwoFilled = calculatePointsEventBased(result).handFilled;
+    const handOnePoints = calculatePointsEventBased(prevResult).points;
+    const handTwoPoints = calculatePointsEventBased(result).points;
+    const userIndex = room.clients.indexOf(username);
+
+    if (handOneFilled && handTwoFilled) {
+        room.points[userIndex] += (handOnePoints + handTwoPoints) * 2;
+    } 
+
+    // Updates turn and re-enable buttons on player
+    room.turnNumber++;
+    room.turnNumber = room.turnNumber % room.clients.length;
+
+    enableKeepDiceButtons();
+    resetSpecialEventGeneral();
     updateAllGameInformation(room);
 }
 
@@ -402,7 +602,7 @@ function disableKeepDiceButtons(keepDiceArray) {
 
 // Special Event stuff
 specialEventButton.addEventListener('click', function () {
-    let randomNumber = Math.floor((Math.random() * 3));
+    let randomNumber = Math.floor((Math.random() * 6));
     const Event = specialEvents[randomNumber];
     currentEvent = Event;
     specialEventButton.disabled = true;
@@ -425,16 +625,31 @@ function newSpecialEvent(Event) {
             room.turnNumber = room.turnNumber % room.clients.length;
             
             document.getElementById('specialEventStrong').innerHTML = "Lost your turn!";
-            currentPlayer = player;
+            currentPlayer = room.clients[room.turnNumber];
             resetDice();
             resetExtraDice();
             specialEventButton.disabled = false;
-            turnInformation.textContent = `${player}'s turn`;
+            turnInformation.textContent = `${currentPlayer}'s turn`;
             break;
         }
 
         case ">=500": {
             document.getElementById('specialEventStrong').innerHTML = "Fill with over 500 for 500+ points!";
+            break;
+        }
+
+        case "retribution": {
+            document.getElementById('specialEventStrong').innerHTML = "Retribution!";
+            break;
+        }
+
+        case "allOrNothing": {
+            document.getElementById('specialEventStrong').innerHTML = "All or Nothing!";
+            break;
+        }
+
+        case "twoForTwo": {
+            document.getElementById('specialEventStrong').innerHTML = "Two for Two!";
             break;
         }
     }
@@ -458,6 +673,7 @@ function resetSpecialEvent (Event) {
 
     document.getElementById('specialEventStrong').innerHTML = "Special Event";
     resetDice();
+    currentEvent = undefined;
     specialEventButton.disabled = false;
 }
 
@@ -490,6 +706,34 @@ function resetExtraDice() {
     let extraDice = document.getElementById('dice7');
     extraDice.alt = "";
     document.getElementById('extraDiceBox').style.display = "none";
+}
+
+/*  This function looks through every dice for a specific number and 
+    locks that dice's keep button and locks the specific amount "Count" 
+*/
+function lockKeepButtonForDice(number, count) {
+    let counter = 0;
+    for (let i = 0; i < 6; i++) {
+        /*  if the dice isn't already locked, is the right number, 
+            and you haven't found the right amount, lock it.
+        */
+
+        let diceValue = parseInt(document.getElementById(`dice${i+1}`).alt);
+        if (keepDiceArray[i] === false && diceValue === number && counter < count) {
+            keepDiceArray[i] = true;
+            const keepButton = document.getElementById(`keepDiceButton${i+1}`);
+            keepButton.style.backgroundColor = '#FFCCCB';
+            keepButton.disabled = true;
+            counter++;
+        }
+    }
+}
+
+function resetSpecialEventGeneral() {
+    document.getElementById('specialEventStrong').innerHTML = "Special Event";
+    resetDice();
+    currentEvent = undefined;
+    specialEventButton.disabled = false;
 }
 
 /*  Event listener for the buttons that allow you to keep dice.
