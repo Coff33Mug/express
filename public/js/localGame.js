@@ -14,6 +14,7 @@ const room = {
 }
 let currentPlayer;
 let currentEvent;
+let gameStarted = false;
 let firstTurn = true;
 let firstHandKeep = true;
 let prevResult = new Array(6).fill(0);
@@ -45,6 +46,11 @@ document.getElementById('addUserButton').addEventListener('click', function () {
 document.getElementById('rollDiceButton').addEventListener('click', function () {
     if (room.clients.length === 0) {
         return;
+    }
+
+    if (gameStarted == false) {
+        specialEventButton.disabled = false;
+        gameStarted = true;
     }
 
     let result = [];

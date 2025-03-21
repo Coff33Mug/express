@@ -7,8 +7,6 @@ const images = [
     "../images/cat.gif", 
 ];
 
-// Value that iterates through images
-let index = 0;
 
 // Events that respond to server emits
 // Redirects user to game page.
@@ -75,7 +73,11 @@ document.getElementById('createRoom').addEventListener('click', function() {
 
 const refreshRoomsButton = document.getElementById('refreshRoomsButton');
 refreshRoomsButton.addEventListener('click', function() {
-    // Remove paragraphs not working.
+    socket.emit('refreshRooms');
+});
+
+socket.on('refreshRooms', rooms => {
+    // Removes all text form rooms textbox
     const roomDisplayBox = document.querySelector('.roomDisplayBox');
     const paragraphs = roomDisplayBox.querySelectorAll('p');
 
@@ -83,10 +85,6 @@ refreshRoomsButton.addEventListener('click', function() {
         roomDisplayBox.removeChild(paragraph);
     });
 
-    socket.emit('refreshRooms');
-});
-
-socket.on('refreshRooms', rooms => {
     // Checks if rooms exist.
     if (rooms.length === 0) {
         const paragraph = document.createElement('p');
