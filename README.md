@@ -4,7 +4,7 @@
 
 - 📄 Read more about how I made it at [https://coff33mug.github.io/express/public/html/beginning.html](https://coff33mug.github.io/express/public/html/beginning.html)
 
-<h3 align="left">Connect with me:</h3>
+<h3 align="left">Connect with me: HuynhD2005@gmail.com </h3>
 <p align="left">
 </p>
 
